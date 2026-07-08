@@ -1,0 +1,259 @@
+/**
+ * useAppStore.ts
+ * Central Zustand store for Apkirota — manages API keys, sessions, mode, and settings.
+ */
+
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import { v4 as uuidv4 } from "uuid";
+import { invoke } from "@tauri-apps/api/core";
+import type { ApiKeyEntry, KeyStatus } from "../lib/KeyRotator";
+import type { ChatMessage } from "../lib/geminiClient";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+export type AppMode = "normal" | "unlimited";
+
+export const SUPPORTED_MODELS = [
+  "antigravity-preview-05-2026",
+  "gemini-3.5-flash",
+  "gemini-3.1-flash-lite",
+  "gemini-2.5-flash-lite",
+  "gemini-2.5-flash",
+  "gemini-2.0-flash-lite",
+  "gemma-4-31b-it",
+  "gemma-4-26b-a4b-it",
+  "gemini-robotics-er-1.6-preview",
+] as const;
+
+export type GeminiModel = (typeof SUPPORTED_MODELS)[number];
+
+export interface ChatSession {
+  id: string;
+  title: string;
+  createdAt: number;
+  updatedAt: number;
+  messages: ChatMessage[];
+}
+
+export interface Skill {
+  id: string;
+  name: string;
+  systemPrompt: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+interface AppState {
+  // API Keys
+  apiKeys: ApiKeyEntry[];
+  addApiKey: (name: string) => string;
+  removeApiKey: (id: string) => void;
+  updateKeyStatus: (id: string, status: KeyStatus) => void;
+  updateKeyName: (id: string, name: string) => void;
+
+  // Mode
+  mode: AppMode;
+  setMode: (mode: AppMode) => void;
+
+  // Model
+  selectedModel: GeminiModel;
+  setModel: (model: GeminiModel) => void;
+
+  // Sessions
+  sessions: ChatSession[];
+  activeSessionId: string | null;
+  createSession: () => string;
+  deleteSession: (id: string) => void;
+  selectSession: (id: string) => void;
+  appendMessage: (sessionId: string, message: ChatMessage) => void;
+  renameSession: (id: string, title: string) => void;
+  clearAllSessions: () => void;
+
+  // Skills
+  skills: Skill[];
+  createSkill: (name: string, systemPrompt: string) => void;
+  updateSkill: (id: string, name: string, systemPrompt: string) => void;
+  deleteSkill: (id: string) => void;
+
+  // Settings
+  historyEnabled: boolean;
+  setHistoryEnabled: (enabled: boolean) => void;
+  theme: "light" | "dark";
+  toggleTheme: () => void;
+
+  // UI state (not persisted)
+  isSidebarOpen: boolean;
+  setSidebarOpen: (open: boolean) => void;
+  currentView: "chat" | "settings" | "history" | "skills";
+  setView: (view: "chat" | "settings" | "history" | "skills") => void;
+  isLoading: boolean;
+  setLoading: (loading: boolean) => void;
+  error: string | null;
+  setError: (error: string | null) => void;
+}
+
+// ─── Store ────────────────────────────────────────────────────────────────────
+
+export const useAppStore = create<AppState>()(
+  persist(
+    (set) => ({
+      // ── API Keys ──────────────────────────────────────────────────────────
+      apiKeys: [],
+      addApiKey: (name) => {
+        const id = uuidv4();
+        set((s) => ({
+          apiKeys: [
+            ...s.apiKeys,
+            { id, name, status: "unchecked" as KeyStatus },
+          ],
+        }));
+        return id;
+      },
+      removeApiKey: (id) => {
+        invoke("delete_api_key", { keyId: id }).catch((e) => console.error(e));
+        set((s) => ({ apiKeys: s.apiKeys.filter((k) => k.id !== id) }));
+      },
+      updateKeyStatus: (id, status) =>
+        set((s) => ({
+          apiKeys: s.apiKeys.map((k) => (k.id === id ? { ...k, status } : k)),
+        })),
+      updateKeyName: (id, name) =>
+        set((s) => ({
+          apiKeys: s.apiKeys.map((k) => (k.id === id ? { ...k, name } : k)),
+        })),
+
+      // ── Mode ──────────────────────────────────────────────────────────────
+      mode: "normal",
+      setMode: (mode) => set({ mode }),
+
+      // ── Model ─────────────────────────────────────────────────────────────
+      selectedModel: "gemini-2.5-flash",
+      setModel: (model) => set({ selectedModel: model }),
+
+      // ── Sessions ──────────────────────────────────────────────────────────
+      sessions: [],
+      activeSessionId: null,
+
+      createSession: () => {
+        const id = uuidv4();
+        const session: ChatSession = {
+          id,
+          title: "New Chat",
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+          messages: [],
+        };
+        set((s) => ({
+          sessions: [session, ...s.sessions],
+          activeSessionId: id,
+        }));
+        return id;
+      },
+
+      deleteSession: (id) =>
+        set((s) => {
+          const remaining = s.sessions.filter((sess) => sess.id !== id);
+          return {
+            sessions: remaining,
+            activeSessionId:
+              s.activeSessionId === id
+                ? (remaining[0]?.id ?? null)
+                : s.activeSessionId,
+          };
+        }),
+
+      selectSession: (id) => set({ activeSessionId: id }),
+
+      appendMessage: (sessionId, message) =>
+        set((s) => ({
+          sessions: s.sessions.map((sess) =>
+            sess.id === sessionId
+              ? {
+                  ...sess,
+                  messages: [...sess.messages, message],
+                  updatedAt: Date.now(),
+                  // Auto-title from first user message
+                  title:
+                    sess.messages.length === 0 && message.role === "user"
+                      ? ((message.parts[0]?.text ?? "New Chat").slice(0, 40))
+                      : sess.title,
+                }
+              : sess
+          ),
+        })),
+
+      renameSession: (id, title) =>
+        set((s) => ({
+          sessions: s.sessions.map((sess) =>
+            sess.id === id ? { ...sess, title } : sess
+          ),
+        })),
+
+      clearAllSessions: () => set({ sessions: [], activeSessionId: null }),
+
+      // ── Skills ────────────────────────────────────────────────────────────
+      skills: [],
+      createSkill: (name, systemPrompt) => {
+        const id = uuidv4();
+        const now = Date.now();
+        set((s) => ({
+          skills: [...s.skills, { id, name, systemPrompt, createdAt: now, updatedAt: now }],
+        }));
+      },
+      updateSkill: (id, name, systemPrompt) => {
+        set((s) => ({
+          skills: s.skills.map((skill) =>
+            skill.id === id ? { ...skill, name, systemPrompt, updatedAt: Date.now() } : skill
+          ),
+        }));
+      },
+      deleteSkill: (id) => {
+        set((s) => ({ skills: s.skills.filter((skill) => skill.id !== id) }));
+      },
+
+      // ── Settings ──────────────────────────────────────────────────────────
+      historyEnabled: true,
+      setHistoryEnabled: (enabled) => set({ historyEnabled: enabled }),
+      theme: "light",
+      toggleTheme: () => set((s) => ({ theme: s.theme === "light" ? "dark" : "light" })),
+
+      // ── UI State (not persisted — reset each launch) ───────────────────────
+      isSidebarOpen: true,
+      setSidebarOpen: (open) => set({ isSidebarOpen: open }),
+      currentView: "chat",
+      setView: (view) => set({ currentView: view }),
+      isLoading: false,
+      setLoading: (loading) => set({ isLoading: loading }),
+      error: null,
+      setError: (error) => set({ error }),
+    }),
+    {
+      name: "apkirota-storage",
+      partialize: (state) => ({
+        apiKeys: state.apiKeys,
+        mode: state.mode,
+        selectedModel: state.selectedModel,
+        sessions: state.sessions,
+        activeSessionId: state.activeSessionId,
+        skills: state.skills,
+        historyEnabled: state.historyEnabled,
+        theme: state.theme,
+      }),
+    }
+  )
+);
+
+// ─── Selectors ────────────────────────────────────────────────────────────────
+
+export const selectActiveSession = (s: AppState): ChatSession | null =>
+  s.sessions.find((sess) => sess.id === s.activeSessionId) ?? null;
+
+export const selectHealthyKeyCount = (s: AppState): number => {
+  const now = Date.now();
+  return s.apiKeys.filter(
+    (k) =>
+      k.status !== "invalid" &&
+      (k.status !== "rate-limited" || (k.cooldownUntil ?? 0) < now)
+  ).length;
+};
