@@ -21,6 +21,14 @@ export class KeyRotator {
     this.keys = keys;
   }
 
+  getCurrentIndex(): number {
+    return this.currentIndex;
+  }
+
+  setCurrentIndex(index: number): void {
+    this.currentIndex = index;
+  }
+
   /** Returns the pool of all registered keys. */
   get pool(): ApiKeyEntry[] {
     return this.keys;

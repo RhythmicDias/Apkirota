@@ -33,6 +33,12 @@ export interface SendMessageOptions {
 export interface GeminiResponse {
   text: string;
   usedKeyName: string;
+  usedKeyId: string;
+  usage?: {
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+  };
 }
 
 /** Build the request body for the Gemini generateContent endpoint. */
@@ -121,8 +127,21 @@ export async function sendMessage(
       const text: string =
         json?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
 
+      const promptTokens = json?.usageMetadata?.promptTokenCount ?? 0;
+      const completionTokens = json?.usageMetadata?.candidatesTokenCount ?? 0;
+      const totalTokens = json?.usageMetadata?.totalTokenCount ?? 0;
+
       opts.rotator.reportValid(entry.id);
-      return { text, usedKeyName: entry.name };
+      return {
+        text,
+        usedKeyName: entry.name,
+        usedKeyId: entry.id,
+        usage: {
+          promptTokens,
+          completionTokens,
+          totalTokens,
+        },
+      };
     } catch (err) {
       if (err instanceof Error && err.message.startsWith("Gemini API error")) throw err;
       lastError = err as Error;

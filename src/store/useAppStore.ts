@@ -44,6 +44,17 @@ export interface Skill {
   updatedAt: number;
 }
 
+export interface UsageRecord {
+  id: string;
+  apiKeyId: string;
+  apiKeyName: string;
+  model: string;
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
+  timestamp: number;
+}
+
 interface AppState {
   // API Keys
   apiKeys: ApiKeyEntry[];
@@ -69,6 +80,7 @@ interface AppState {
   appendMessage: (sessionId: string, message: ChatMessage) => void;
   renameSession: (id: string, title: string) => void;
   clearAllSessions: () => void;
+  clearSessionMessages: (id: string) => void;
 
   // Skills
   skills: Skill[];
@@ -76,11 +88,18 @@ interface AppState {
   updateSkill: (id: string, name: string, systemPrompt: string) => void;
   deleteSkill: (id: string) => void;
 
+  // Usage
+  usageRecords: UsageRecord[];
+  recordUsage: (record: Omit<UsageRecord, "id" | "timestamp">) => void;
+  clearUsageRecords: () => void;
+
   // Settings
   historyEnabled: boolean;
   setHistoryEnabled: (enabled: boolean) => void;
   theme: "light" | "dark";
   toggleTheme: () => void;
+  rotationIndex: number;
+  setRotationIndex: (idx: number) => void;
 
   // UI state (not persisted)
   isSidebarOpen: boolean;
@@ -192,6 +211,13 @@ export const useAppStore = create<AppState>()(
 
       clearAllSessions: () => set({ sessions: [], activeSessionId: null }),
 
+      clearSessionMessages: (id) =>
+        set((s) => ({
+          sessions: s.sessions.map((sess) =>
+            sess.id === id ? { ...sess, messages: [], updatedAt: Date.now() } : sess
+          ),
+        })),
+
       // ── Skills ────────────────────────────────────────────────────────────
       skills: [],
       createSkill: (name, systemPrompt) => {
@@ -212,11 +238,24 @@ export const useAppStore = create<AppState>()(
         set((s) => ({ skills: s.skills.filter((skill) => skill.id !== id) }));
       },
 
+      // ── Usage ─────────────────────────────────────────────────────────────
+      usageRecords: [],
+      recordUsage: (record) => {
+        const id = uuidv4();
+        const timestamp = Date.now();
+        set((s) => ({
+          usageRecords: [...s.usageRecords, { ...record, id, timestamp }],
+        }));
+      },
+      clearUsageRecords: () => set({ usageRecords: [] }),
+
       // ── Settings ──────────────────────────────────────────────────────────
       historyEnabled: true,
       setHistoryEnabled: (enabled) => set({ historyEnabled: enabled }),
       theme: "light",
       toggleTheme: () => set((s) => ({ theme: s.theme === "light" ? "dark" : "light" })),
+      rotationIndex: 0,
+      setRotationIndex: (rotationIndex) => set({ rotationIndex }),
 
       // ── UI State (not persisted — reset each launch) ───────────────────────
       isSidebarOpen: true,
@@ -239,6 +278,8 @@ export const useAppStore = create<AppState>()(
         skills: state.skills,
         historyEnabled: state.historyEnabled,
         theme: state.theme,
+        usageRecords: state.usageRecords,
+        rotationIndex: state.rotationIndex,
       }),
     }
   )

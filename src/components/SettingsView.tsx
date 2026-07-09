@@ -45,12 +45,14 @@ const SettingsView: React.FC = () => {
   const clearAllSessions  = useAppStore((s) => s.clearAllSessions);
   const selectedModel     = useAppStore((s) => s.selectedModel);
   const setView           = useAppStore((s) => s.setView);
+  const usageRecords      = useAppStore((s) => s.usageRecords);
+  const clearUsageRecords = useAppStore((s) => s.clearUsageRecords);
 
   // Form states
   const [newName, setNewName]         = useState("");
   const [newKey, setNewKey]           = useState("");
   const [testing, setTesting]         = useState<Set<string>>(new Set());
-  const [activeTab, setActiveTab]     = useState<"api" | "privacy">("api");
+  const [activeTab, setActiveTab]     = useState<"api" | "privacy" | "usage">("api");
   const [formError, setFormError]     = useState<string | null>(null);
 
   // Edit states for existing keys
@@ -246,6 +248,26 @@ const SettingsView: React.FC = () => {
         >
           Privacy
           {activeTab === "privacy" && (
+            <div style={{ position: "absolute", bottom: 0, left: 0, width: "100%", height: "2px", background: "var(--primary)" }} />
+          )}
+        </button>
+        <button
+          onClick={() => setActiveTab("usage")}
+          style={{
+            padding: "10px 20px",
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: "13px",
+            letterSpacing: "0.02em",
+            fontWeight: 500,
+            cursor: "pointer",
+            background: "transparent",
+            border: "none",
+            color: activeTab === "usage" ? "var(--primary)" : "var(--text-color-muted)",
+            position: "relative"
+          }}
+        >
+          Usage
+          {activeTab === "usage" && (
             <div style={{ position: "absolute", bottom: 0, left: 0, width: "100%", height: "2px", background: "var(--primary)" }} />
           )}
         </button>
@@ -530,6 +552,130 @@ const SettingsView: React.FC = () => {
             </div>
           </div>
         )}
+
+        {activeTab === "usage" && (() => {
+          const totals = usageRecords.reduce(
+            (acc, r) => {
+              acc.prompt += r.promptTokens;
+              acc.completion += r.completionTokens;
+              acc.total += r.totalTokens;
+              return acc;
+            },
+            { prompt: 0, completion: 0, total: 0 }
+          );
+
+          const modelStats = usageRecords.reduce((acc, r) => {
+            if (!acc[r.model]) acc[r.model] = { prompt: 0, completion: 0, total: 0 };
+            acc[r.model].prompt += r.promptTokens;
+            acc[r.model].completion += r.completionTokens;
+            acc[r.model].total += r.totalTokens;
+            return acc;
+          }, {} as Record<string, { prompt: number; completion: number; total: number }>);
+
+          const keyStats = usageRecords.reduce((acc, r) => {
+            const keyLabel = r.apiKeyName || "Unnamed Key";
+            if (!acc[keyLabel]) acc[keyLabel] = { prompt: 0, completion: 0, total: 0 };
+            acc[keyLabel].prompt += r.promptTokens;
+            acc[keyLabel].completion += r.completionTokens;
+            acc[keyLabel].total += r.totalTokens;
+            return acc;
+          }, {} as Record<string, { prompt: number; completion: number; total: number }>);
+
+          return (
+            <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+              {/* Summary Cards */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "16px" }}>
+                {[
+                  { label: "PROMPT TOKENS", value: totals.prompt, icon: "arrow_upward" },
+                  { label: "COMPLETION TOKENS", value: totals.completion, icon: "arrow_downward" },
+                  { label: "TOTAL TOKENS", value: totals.total, icon: "toll" },
+                ].map((card) => (
+                  <div key={card.label} className="input-card" style={{ padding: "20px", borderRadius: "1.5rem", display: "flex", alignItems: "center", gap: "16px" }}>
+                    <div style={{ width: "40px", height: "40px", borderRadius: "50%", background: "var(--tertiary-fixed)", color: "var(--tertiary)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>{card.icon}</span>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: "11px", fontFamily: "'JetBrains Mono', monospace", color: "var(--text-color-muted)" }}>{card.label}</div>
+                      <div style={{ fontSize: "22px", fontWeight: 700, color: "var(--text-color)", marginTop: "4px" }}>{card.value.toLocaleString()}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Model Breakdown */}
+              <div className="input-card" style={{ padding: "24px", borderRadius: "2rem" }}>
+                <h3 style={{ fontSize: "18px", fontWeight: 700, color: "var(--text-color)", margin: "0 0 16px 0" }}>Usage by Model</h3>
+                {Object.keys(modelStats).length === 0 ? (
+                  <p style={{ fontStyle: "italic", color: "var(--text-color-muted)", margin: 0 }}>No model usage recorded yet.</p>
+                ) : (
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px" }}>
+                    <thead>
+                      <tr style={{ borderBottom: "1px solid var(--border-color)", textAlign: "left" }}>
+                        <th style={{ padding: "10px 8px", color: "var(--text-color-muted)" }}>Model</th>
+                        <th style={{ padding: "10px 8px", color: "var(--text-color-muted)", textAlign: "right" }}>Prompt</th>
+                        <th style={{ padding: "10px 8px", color: "var(--text-color-muted)", textAlign: "right" }}>Completion</th>
+                        <th style={{ padding: "10px 8px", color: "var(--text-color-muted)", textAlign: "right" }}>Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Object.entries(modelStats).map(([model, s]) => (
+                        <tr key={model} style={{ borderBottom: "1px solid rgba(213,205,197,0.15)" }}>
+                          <td style={{ padding: "12px 8px", fontWeight: 600, color: "var(--text-color)" }}>{model}</td>
+                          <td style={{ padding: "12px 8px", color: "var(--text-color-muted)", textAlign: "right" }}>{s.prompt.toLocaleString()}</td>
+                          <td style={{ padding: "12px 8px", color: "var(--text-color-muted)", textAlign: "right" }}>{s.completion.toLocaleString()}</td>
+                          <td style={{ padding: "12px 8px", color: "var(--primary)", fontWeight: 700, textAlign: "right" }}>{s.total.toLocaleString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+
+              {/* API Key Breakdown */}
+              <div className="input-card" style={{ padding: "24px", borderRadius: "2rem" }}>
+                <h3 style={{ fontSize: "18px", fontWeight: 700, color: "var(--text-color)", margin: "0 0 16px 0" }}>Usage by API Key</h3>
+                {Object.keys(keyStats).length === 0 ? (
+                  <p style={{ fontStyle: "italic", color: "var(--text-color-muted)", margin: 0 }}>No API key usage recorded yet.</p>
+                ) : (
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px" }}>
+                    <thead>
+                      <tr style={{ borderBottom: "1px solid var(--border-color)", textAlign: "left" }}>
+                        <th style={{ padding: "10px 8px", color: "var(--text-color-muted)" }}>API Key</th>
+                        <th style={{ padding: "10px 8px", color: "var(--text-color-muted)", textAlign: "right" }}>Prompt</th>
+                        <th style={{ padding: "10px 8px", color: "var(--text-color-muted)", textAlign: "right" }}>Completion</th>
+                        <th style={{ padding: "10px 8px", color: "var(--text-color-muted)", textAlign: "right" }}>Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Object.entries(keyStats).map(([keyName, s]) => (
+                        <tr key={keyName} style={{ borderBottom: "1px solid rgba(213,205,197,0.15)" }}>
+                          <td style={{ padding: "12px 8px", fontWeight: 600, color: "var(--text-color)" }}>{keyName}</td>
+                          <td style={{ padding: "12px 8px", color: "var(--text-color-muted)", textAlign: "right" }}>{s.prompt.toLocaleString()}</td>
+                          <td style={{ padding: "12px 8px", color: "var(--text-color-muted)", textAlign: "right" }}>{s.completion.toLocaleString()}</td>
+                          <td style={{ padding: "12px 8px", color: "var(--primary)", fontWeight: 700, textAlign: "right" }}>{s.total.toLocaleString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+
+              {/* Reset Usage */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "16px", padding: "20px", borderRadius: "16px", border: "1px solid rgba(186,26,26,0.15)", background: "rgba(249,218,214,0.20)" }}>
+                <div>
+                  <p style={{ fontSize: "18px", fontWeight: 700, color: "#ba1a1a", margin: "0 0 4px 0" }}>Danger Zone</p>
+                  <p style={{ fontSize: "14px", color: "#ba1a1a", opacity: 0.85, margin: 0 }}>Reset all token usage records. This cannot be undone.</p>
+                </div>
+                <button
+                  onClick={() => { if (confirm("Clear all token usage records?")) clearUsageRecords(); }}
+                  style={{ width: "100%", padding: "10px", borderRadius: "12px", fontFamily: "'JetBrains Mono', monospace", fontSize: "12px", border: "1px solid rgba(186,26,26,0.25)", color: "#ba1a1a", background: "rgba(249,218,214,0.40)", cursor: "pointer" }}
+                >
+                  Reset Usage Stats
+                </button>
+              </div>
+            </div>
+          );
+        })()}
       </div>
     </div>
   );

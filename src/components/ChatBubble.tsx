@@ -25,24 +25,25 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ message }) => {
 
   if (isUser) {
     return (
-      <div className="flex justify-end py-1 fade-in">
-        <div className="max-w-[72%] flex flex-col items-end gap-2">
+      <div className="fade-in" style={{ display: "flex", justifyContent: "flex-end", padding: "4px 0", width: "100%" }}>
+        <div style={{ maxWidth: "72%", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "8px" }}>
           {images.map((part, i) => (
             <img
               key={i}
               src={`data:${part.inlineData!.mimeType};base64,${part.inlineData!.data}`}
-              className="max-h-52 rounded-2xl border border-[#b1624d]/15 shadow-sm"
               alt="attachment"
+              style={{ maxHeight: "208px", borderRadius: "1rem", border: "1px solid rgba(177, 98, 77, 0.15)", boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)" }}
             />
           ))}
           {text && (
             <div
-              className="bubble-user px-5 py-3.5"
+              className="bubble-user"
               style={{
+                padding: "14px 20px",
                 fontFamily: "'Crimson Pro', serif",
                 fontSize: "17px",
                 lineHeight: "26px",
-                color: "#433e3a",
+                color: "var(--text-color)",
               }}
             >
               {text}
@@ -55,23 +56,28 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ message }) => {
 
   // AI bubble
   return (
-    <div className="flex justify-start py-1 gap-3 fade-in">
+    <div className="fade-in" style={{ display: "flex", justifyContent: "flex-start", padding: "4px 0", gap: "12px", width: "100%" }}>
       {/* AI avatar */}
       <div
-        className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-1"
-        style={{ background: "#d9e5dd" }}
+        style={{
+          width: "32px", height: "32px", borderRadius: "9999px",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          flexShrink: 0, marginTop: "4px", background: "var(--tertiary-fixed)",
+          color: "var(--tertiary)"
+        }}
       >
         <Icon name="spa" />
       </div>
 
       {/* Content */}
       <div
-        className="bubble-ai max-w-[80%] px-5 py-4"
         style={{
+          maxWidth: "85%",
+          padding: "8px 0",
           fontFamily: "'Crimson Pro', serif",
           fontSize: "17px",
-          lineHeight: "26px",
-          color: "#433e3a",
+          lineHeight: "28px",
+          color: "var(--text-color)",
         }}
       >
         <ReactMarkdown
@@ -151,7 +157,7 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ message }) => {
             },
             td({ children }) {
               return (
-                <td style={{ padding: "8px 16px", borderBottom: "1px solid rgba(213,205,197,0.20)", color: "#433e3a" }}>
+                <td style={{ padding: "8px 16px", borderBottom: "1px solid rgba(213,205,197,0.20)", color: "var(--text-color)" }}>
                   {children}
                 </td>
               );

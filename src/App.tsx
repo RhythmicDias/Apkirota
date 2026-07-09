@@ -123,6 +123,10 @@ const App: React.FC = () => {
   const setView         = useAppStore((s) => s.setView);
   const theme           = useAppStore((s) => s.theme);
   const toggleTheme     = useAppStore((s) => s.toggleTheme);
+  const recordUsage     = useAppStore((s) => s.recordUsage);
+  const rotationIndex   = useAppStore((s) => s.rotationIndex);
+  const setRotationIndex = useAppStore((s) => s.setRotationIndex);
+  const clearSessionMessages = useAppStore((s) => s.clearSessionMessages);
 
   const [text, setText]               = useState("");
   const [attachments, setAttachments] = useState<AttachedFile[]>([]);
@@ -175,6 +179,9 @@ const App: React.FC = () => {
     }
   };
 
+  const welcomeInputRef = useRef<HTMLTextAreaElement>(null);
+  const chatInputRef    = useRef<HTMLTextAreaElement>(null);
+
   // Sync theme
   useEffect(() => {
     if (theme === "dark") {
@@ -183,6 +190,23 @@ const App: React.FC = () => {
       document.documentElement.classList.remove("dark");
     }
   }, [theme]);
+
+  // Auto-resize textareas dynamically
+  useEffect(() => {
+    const wRef = welcomeInputRef.current;
+    if (wRef) {
+      wRef.style.height = "auto";
+      wRef.style.height = `${wRef.scrollHeight}px`;
+    }
+  }, [text, currentView]);
+
+  useEffect(() => {
+    const cRef = chatInputRef.current;
+    if (cRef) {
+      cRef.style.height = "auto";
+      cRef.style.height = `${cRef.scrollHeight}px`;
+    }
+  }, [text, currentView]);
 
   useEffect(() => { if (!activeSessionId) createSession(); }, []);
   useEffect(() => { messagesEnd.current?.scrollIntoView({ behavior: "smooth" }); }, [activeSession?.messages.length]);
@@ -213,6 +237,14 @@ const App: React.FC = () => {
       currentSessionId = createSession();
     }
 
+    if (msg.toLowerCase() === "/clear") {
+      clearSessionMessages(currentSessionId);
+      appendMessage(currentSessionId, { role: "model", parts: [{ text: "Memory cleared. How can I help you today?" }] });
+      setText("");
+      setAttachments([]);
+      return;
+    }
+
     setLocalError(null);
 
     const userParts: ChatPart[] = [
@@ -226,9 +258,21 @@ const App: React.FC = () => {
 
     try {
       const rotator  = new KeyRotator(apiKeys);
+      rotator.setCurrentIndex(rotationIndex);
       const history  = (activeSession?.messages ?? []).slice(-20);
       const response = await sendMessage({ model: selectedModel, history, userParts, rotator, mode });
+      setRotationIndex(rotator.getCurrentIndex());
       appendMessage(currentSessionId, { role: "model", parts: [{ text: response.text }] });
+      if (response.usage) {
+        recordUsage({
+          apiKeyId: response.usedKeyId,
+          apiKeyName: response.usedKeyName,
+          model: selectedModel,
+          promptTokens: response.usage.promptTokens,
+          completionTokens: response.usage.completionTokens,
+          totalTokens: response.usage.totalTokens,
+        });
+      }
     } catch (err) {
       setLocalError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
@@ -237,7 +281,10 @@ const App: React.FC = () => {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && e.ctrlKey) { e.preventDefault(); handleSend(); }
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
   };
 
   const handleNewChat = () => { createSession(); setLocalError(null); };
@@ -504,12 +551,13 @@ const App: React.FC = () => {
               >
                 {/* Textarea */}
                 <textarea
+                  ref={welcomeInputRef}
                   value={text}
                   onChange={(e) => setText(e.target.value)}
                   onKeyDown={handleKeyDown}
                   disabled={isLoading}
                   placeholder="How can I help you today?"
-                  rows={4}
+                  rows={1}
                   style={{
                     width: "100%",
                     background: "transparent",
@@ -639,20 +687,20 @@ const App: React.FC = () => {
           ────────────────────────────────────────── */
           <div className="flex-1 flex flex-col">
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto px-4 py-6">
-              <div className="max-w-3xl mx-auto space-y-2">
+            <div className="flex-1 overflow-y-auto px-6 py-6">
+              <div style={{ maxWidth: "860px", margin: "0 auto", width: "100%", display: "flex", flexDirection: "column", gap: "12px" }}>
                 {messages.map((msg, i) => <ChatBubble key={i} message={msg} />)}
 
                 {isLoading && (
-                  <div className="flex gap-4 items-start py-2">
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-1" style={{ background: "#d9e5dd" }}>
+                  <div style={{ display: "flex", gap: "16px", alignItems: "flex-start", padding: "8px 0" }}>
+                    <div style={{ width: "32px", height: "32px", borderRadius: "9999px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: "4px", background: "var(--tertiary-fixed)", color: "var(--tertiary)" }}>
                       <Icon name="spa" thin size={16} />
                     </div>
-                    <div className="bubble-ai px-5 py-4">
-                      <div className="flex gap-1.5">
+                    <div className="bubble-ai" style={{ padding: "16px 20px" }}>
+                      <div style={{ display: "flex", gap: "6px" }}>
                         {[0,1,2].map((j) => (
-                          <span key={j} className="w-2 h-2 rounded-full animate-bounce"
-                            style={{ background: "rgba(138,129,122,0.40)", animationDelay: `${j * 0.15}s` }} />
+                          <span key={j} className="animate-bounce"
+                            style={{ width: "8px", height: "8px", borderRadius: "9999px", background: "rgba(138,129,122,0.40)", animationDelay: `${j * 0.15}s` }} />
                         ))}
                       </div>
                     </div>
@@ -666,12 +714,13 @@ const App: React.FC = () => {
             <div className="flex-shrink-0 px-6 pb-4" style={{ maxWidth: "860px", margin: "0 auto", width: "100%" }}>
               <div className="input-card" style={{ padding: "20px 28px 16px 28px" }}>
                 <textarea
+                  ref={chatInputRef}
                   value={text}
                   onChange={(e) => setText(e.target.value)}
                   onKeyDown={handleKeyDown}
                   disabled={isLoading}
                   placeholder="Continue the conversation…"
-                  rows={2}
+                  rows={1}
                   style={{
                     width: "100%", background: "transparent", border: "none", outline: "none", resize: "none",
                     fontFamily: "'Crimson Pro', serif", fontSize: "17px", fontStyle: "italic",
