@@ -134,6 +134,7 @@ const App: React.FC = () => {
   const [attachments, setAttachments] = useState<AttachedFile[]>([]);
   const [isDragOver, setIsDragOver]   = useState(false);
   const [localError, setLocalError]   = useState<string | null>(null);
+  const [isDockVisible, setIsDockVisible] = useState(true);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEnd  = useRef<HTMLDivElement>(null);
@@ -686,9 +687,9 @@ const App: React.FC = () => {
           /* ──────────────────────────────────────────
              ACTIVE CHAT VIEW
           ────────────────────────────────────────── */
-          <div className="flex-1 flex flex-col">
+          <div className="flex-1 relative overflow-hidden">
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto px-6 py-6">
+            <div className="absolute inset-0 overflow-y-auto px-6 pt-6" style={{ paddingBottom: "180px" }}>
               <div style={{ maxWidth: "760px", margin: "0 auto", width: "100%", display: "flex", flexDirection: "column", gap: "12px" }}>
                 {messages.map((msg, i) => {
                   const isLast = i === messages.length - 1;
@@ -798,7 +799,15 @@ const App: React.FC = () => {
             </div>
 
             {/* Chat input */}
-            <div className="flex-shrink-0 px-6 pb-4" style={{ maxWidth: "760px", margin: "0 auto", width: "100%" }}>
+            <div className="absolute bottom-0 left-0 right-0 px-6 pointer-events-none flex flex-col justify-end"
+                 style={{
+                   paddingBottom: isDockVisible ? "90px" : "30px",
+                   paddingTop: "60px",
+                   background: "linear-gradient(to bottom, transparent, var(--bg-color) 70%, var(--bg-color))",
+                   zIndex: 10,
+                   transition: "padding-bottom 0.5s ease"
+                 }}>
+              <div className="pointer-events-auto" style={{ maxWidth: "760px", margin: "0 auto", width: "100%" }}>
               {/* Attachment strip */}
               {attachments.length > 0 && (
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "12px" }}>
@@ -870,6 +879,7 @@ const App: React.FC = () => {
                 </div>
               </div>
             </div>
+            </div>
           </div>
         )}
           </>
@@ -896,19 +906,47 @@ const App: React.FC = () => {
         </div>
       )}
 
+      {/* Expand Dock Button */}
+      <button
+        onClick={() => setIsDockVisible(true)}
+        className="fixed z-50 flex items-center justify-center rounded-full shadow-lg transition-all duration-500"
+        style={{
+          bottom: "20px", left: isDockVisible ? "-60px" : "20px",
+          width: "48px", height: "48px", background: "var(--bento-bg)", border: "1px solid var(--border-color)",
+          color: "var(--text-color)", opacity: isDockVisible ? 0 : 1, backdropFilter: "blur(8px)", cursor: "pointer"
+        }}
+      >
+        <Icon name="chevron_right" size={28} />
+      </button>
+
       {/* ════════════════════════════════════════════════
           FLOATING BOTTOM DOCK
       ════════════════════════════════════════════════ */}
       <nav
-        className="fixed flex items-center floating-dock rounded-2xl shadow-2xl z-40"
+        className="fixed flex items-center floating-dock rounded-2xl shadow-2xl z-40 transition-all duration-500"
         style={{
           bottom: "20px",
           left: "50%",
-          transform: "translateX(-50%)",
+          transform: isDockVisible ? "translateX(-50%)" : "translateX(-150vw)",
+          opacity: isDockVisible ? 1 : 0,
+          pointerEvents: isDockVisible ? "auto" : "none",
           padding: "8px",
           gap: "4px",
         }}
       >
+        <button
+          onClick={() => setIsDockVisible(false)}
+          className="absolute flex items-center justify-center rounded-full shadow transition-colors"
+          style={{
+            top: "-8px", right: "-8px", width: "22px", height: "22px",
+            background: "var(--bg-color)", border: "1px solid var(--border-color)",
+            color: "var(--text-color-muted)", cursor: "pointer", zIndex: 10
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = "var(--primary)")}
+          onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-color-muted)")}
+        >
+          <Icon name="close" size={14} />
+        </button>
         <DockItem icon="chat"          label="CHAT"  active={currentView === "chat"} filled onClick={() => { setView("chat"); }} />
         <DockItem icon="add"           label="NEW"         onClick={() => { setView("chat"); handleNewChat(); }} />
         <DockItem icon="folder"        label="HISTORY"     onClick={() => setView("history")} />
