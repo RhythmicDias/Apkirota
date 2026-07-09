@@ -139,14 +139,18 @@ export async function sendMessage(
       });
 
       if (res.status === 429) {
+        let errText = "";
+        try { errText = await res.text(); } catch (e) {}
         opts.rotator.reportRateLimit(entry.id);
-        lastError = new Error(`Key "${entry.name}" rate-limited (attempt ${attempt + 1}/${MAX_RETRIES})`);
+        lastError = new Error(`Key "${entry.name}" rate-limited (attempt ${attempt + 1}/${MAX_RETRIES}). Details: ${errText}`);
         continue; // retry with next key
       }
 
       if (res.status === 400 || res.status === 401 || res.status === 403) {
+        let errText = "";
+        try { errText = await res.text(); } catch (e) {}
         opts.rotator.reportInvalid(entry.id);
-        lastError = new Error(`Key "${entry.name}" is invalid or unauthorized (attempt ${attempt + 1}/${MAX_RETRIES})`);
+        lastError = new Error(`Key "${entry.name}" is invalid or unauthorized (attempt ${attempt + 1}/${MAX_RETRIES}). Details: ${errText}`);
         continue;
       }
 

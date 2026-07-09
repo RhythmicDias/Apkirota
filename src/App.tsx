@@ -696,7 +696,7 @@ const App: React.FC = () => {
           ────────────────────────────────────────── */
           <div className="flex-1 relative overflow-hidden">
             {/* Messages */}
-            <div className="absolute inset-0 overflow-y-auto px-6 pt-6" style={{ paddingBottom: "24px" }}>
+            <div className="absolute inset-0 overflow-y-auto px-6 pt-6" style={{ paddingBottom: isDockVisible ? "220px" : "140px" }}>
               <div style={{ maxWidth: "760px", margin: "0 auto", width: "100%", display: "flex", flexDirection: "column", gap: "12px" }}>
                 {messages.map((msg, i) => {
                   const isLast = i === messages.length - 1;
@@ -810,7 +810,7 @@ const App: React.FC = () => {
             {/* Chat input */}
             <div className="absolute bottom-0 left-0 right-0 px-6 pointer-events-none flex flex-col justify-end"
                  style={{
-                   paddingBottom: isDockVisible ? "90px" : "30px",
+                   paddingBottom: isDockVisible ? "80px" : "24px",
                    paddingTop: "20px",
                    zIndex: 10,
                    transition: "padding-bottom 0.5s ease"
