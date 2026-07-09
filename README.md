@@ -41,28 +41,30 @@ npm run tauri dev
 
 ---
 
-## ⚙️ How It Works — Rotation Schema
+## ⚙️ How It Works — Routing & Rotation
 
-Apkirota's rotation engine ensures API requests are distributed across all your keys:
+Apkirota uses a sophisticated rotation engine to distribute your API requests based on your selected mode:
 
-```
+### 1. Normal Mode (Single Active Key)
+In Normal mode, the app simply uses the **first healthy key** in your list. 
+- If a rate limit is hit, that key goes on a 60-second cooldown, and the app temporarily falls back to the next key.
+- If you pause for 2-3 minutes (allowing the cooldown to expire), the app immediately routes back through the primary key on your next request.
+
+### 2. Unlimited Mode (Round-Robin)
+In Unlimited mode, the app uses strict **sequential round-robin** rotation to balance the load equally across all your accounts.
+- The app maintains a global index pointer that remembers exactly which key it used last. 
+- Even if you pause for several minutes or hours, the app remembers where it left off and routes your next message through the *next* key in the sequence, not starting over from the top.
+
+```text
 User sends message M1 → Key A (index 0) → index becomes 1
 User sends message M2 → Key B (index 1) → index becomes 2
 User sends message M3 → Key C (index 2) → index becomes 3
 User sends message M4 → Key A (index 0) → wraps back to 0
-
-          ┌───────────────────────────────────┐
-          │         Key Pool (20 keys)        │
-          │  [A] → [B] → [C] → ... → [T] ──┐ │
-          │  ↑                              │ │
-          └──────────────────── (wraps) ────┘ │
-                                              │
-         Each request picks the next key ─────┘
 ```
 
-**Graceful Failure Handling:**
-1. Key returns `429 Rate Limited` → marked as rate-limited (60s cooldown) → skip to next
-2. Key returns `401/403 Invalid` → marked as invalid → skip permanently
+**Graceful Failure Handling (Both Modes):**
+1. Key returns `429 Rate Limited` → marked as rate-limited (60s cooldown) → skipped automatically
+2. Key returns `400/401/403 Invalid` → marked as invalid → skipped permanently until manually fixed
 3. Retries up to **3 times** across different keys before surfacing an error dialog
 
 ---
