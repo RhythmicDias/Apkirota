@@ -24,6 +24,7 @@ export interface ChatMessage {
     promptTokens?: number;
     completionTokens?: number;
     totalTokens?: number;
+    latencyMs?: number;
   };
 }
 

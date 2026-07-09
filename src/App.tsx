@@ -274,7 +274,9 @@ const App: React.FC = () => {
       rotator.setCurrentIndex(rotationIndex);
       const history  = (activeSession?.messages ?? []).slice(-20);
       const modelConfig = modelConfigs[selectedModel];
+      const startTime = Date.now();
       const response = await sendMessage({ model: selectedModel, history, userParts, rotator, mode, modelConfig });
+      const latencyMs = Date.now() - startTime;
       setRotationIndex(rotator.getCurrentIndex());
       const storeSession = useAppStore.getState().sessions.find(s => s.id === currentSessionId);
       const userMsgIndex = storeSession ? storeSession.messages.length - 1 : -1;
@@ -284,7 +286,7 @@ const App: React.FC = () => {
       appendMessage(currentSessionId, { 
         role: "model", 
         parts: [{ text: response.text }],
-        usage: { completionTokens: response.usage?.completionTokens, totalTokens: response.usage?.totalTokens }
+        usage: { completionTokens: response.usage?.completionTokens, totalTokens: response.usage?.totalTokens, latencyMs }
       });
       if (response.usage) {
         recordUsage({
@@ -730,7 +732,9 @@ const App: React.FC = () => {
                       const rotator  = new KeyRotator(apiKeys);
                       rotator.setCurrentIndex(rotationIndex);
                       const modelConfig = modelConfigs[selectedModel];
+                      const startTime = Date.now();
                       const response = await sendMessage({ model: selectedModel, history, userParts, rotator, mode, modelConfig });
+                      const latencyMs = Date.now() - startTime;
                       setRotationIndex(rotator.getCurrentIndex());
                       if (response.usage) {
                         updateMessageUsage(activeSessionId, i, { promptTokens: response.usage.promptTokens });
@@ -738,7 +742,7 @@ const App: React.FC = () => {
                       appendMessage(activeSessionId, { 
                         role: "model", 
                         parts: [{ text: response.text }],
-                        usage: { completionTokens: response.usage?.completionTokens, totalTokens: response.usage?.totalTokens }
+                        usage: { completionTokens: response.usage?.completionTokens, totalTokens: response.usage?.totalTokens, latencyMs }
                       });
                       if (response.usage) {
                         recordUsage({
@@ -773,7 +777,9 @@ const App: React.FC = () => {
                       const rotator  = new KeyRotator(apiKeys);
                       rotator.setCurrentIndex(rotationIndex);
                       const modelConfig = modelConfigs[selectedModel];
+                      const startTime = Date.now();
                       const response = await sendMessage({ model: selectedModel, history, userParts, rotator, mode, modelConfig });
+                      const latencyMs = Date.now() - startTime;
                       setRotationIndex(rotator.getCurrentIndex());
                       if (response.usage) {
                         updateMessageUsage(activeSessionId, i, { promptTokens: response.usage.promptTokens });
@@ -781,7 +787,7 @@ const App: React.FC = () => {
                       appendMessage(activeSessionId, { 
                         role: "model", 
                         parts: [{ text: response.text }],
-                        usage: { completionTokens: response.usage?.completionTokens, totalTokens: response.usage?.totalTokens }
+                        usage: { completionTokens: response.usage?.completionTokens, totalTokens: response.usage?.totalTokens, latencyMs }
                       });
                       if (response.usage) {
                         recordUsage({

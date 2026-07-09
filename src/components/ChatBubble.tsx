@@ -249,6 +249,7 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ message, onEdit, onResend, isLa
           {message.usage?.completionTokens !== undefined && (
             <span style={{ fontSize: "11px", fontFamily: "'JetBrains Mono', monospace", color: "var(--text-color-muted)", marginRight: "auto" }}>
               Output: {message.usage.completionTokens} | Total: {message.usage.totalTokens}
+              {message.usage.latencyMs !== undefined && ` | Time: ${(message.usage.latencyMs / 1000).toFixed(1)}s`}
             </span>
           )}
           <button onClick={handleCopy} title="Copy" style={{ background: "transparent", border: "none", cursor: "pointer", color: "var(--text-color-muted)" }}>
