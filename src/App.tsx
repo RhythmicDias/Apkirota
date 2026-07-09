@@ -127,6 +127,8 @@ const App: React.FC = () => {
   const rotationIndex   = useAppStore((s) => s.rotationIndex);
   const setRotationIndex = useAppStore((s) => s.setRotationIndex);
   const clearSessionMessages = useAppStore((s) => s.clearSessionMessages);
+  const updateMessageText = useAppStore((s) => s.updateMessageText);
+  const removeSubsequentMessages = useAppStore((s) => s.removeSubsequentMessages);
 
   const [text, setText]               = useState("");
   const [attachments, setAttachments] = useState<AttachedFile[]>([]);
@@ -688,7 +690,93 @@ const App: React.FC = () => {
             {/* Messages */}
             <div className="flex-1 overflow-y-auto px-6 py-6">
               <div style={{ maxWidth: "860px", margin: "0 auto", width: "100%", display: "flex", flexDirection: "column", gap: "12px" }}>
-                {messages.map((msg, i) => <ChatBubble key={i} message={msg} />)}
+                {messages.map((msg, i) => {
+                  const isLast = i === messages.length - 1;
+                  const nextMsg = messages[i + 1];
+                  const hasErr = isLast && msg.role === "user" && localError !== null;
+                  
+                  const handleEditMessage = async (newText: string) => {
+                    if (!activeSessionId) return;
+                    updateMessageText(activeSessionId, i, newText);
+                    removeSubsequentMessages(activeSessionId, i);
+                    
+                    setLoading(true);
+                    setLocalError(null);
+                    try {
+                      const updatedSession = useAppStore.getState().sessions.find((s) => s.id === activeSessionId);
+                      const userMsg = updatedSession?.messages[i];
+                      if (!userMsg) return;
+                      const userParts = userMsg.parts;
+                      const history = (updatedSession?.messages.slice(0, i) ?? []).slice(-20);
+                      
+                      const rotator  = new KeyRotator(apiKeys);
+                      rotator.setCurrentIndex(rotationIndex);
+                      const response = await sendMessage({ model: selectedModel, history, userParts, rotator, mode });
+                      setRotationIndex(rotator.getCurrentIndex());
+                      appendMessage(activeSessionId, { role: "model", parts: [{ text: response.text }] });
+                      if (response.usage) {
+                        recordUsage({
+                          apiKeyId: response.usedKeyId,
+                          apiKeyName: response.usedKeyName,
+                          model: selectedModel,
+                          promptTokens: response.usage.promptTokens,
+                          completionTokens: response.usage.completionTokens,
+                          totalTokens: response.usage.totalTokens,
+                        });
+                      }
+                    } catch (err) {
+                      setLocalError(err instanceof Error ? err.message : "Something went wrong.");
+                    } finally {
+                      setLoading(false);
+                    }
+                  };
+
+                  const handleResendMessage = async () => {
+                    if (!activeSessionId) return;
+                    removeSubsequentMessages(activeSessionId, i);
+                    
+                    setLoading(true);
+                    setLocalError(null);
+                    try {
+                      const updatedSession = useAppStore.getState().sessions.find((s) => s.id === activeSessionId);
+                      const userMsg = updatedSession?.messages[i];
+                      if (!userMsg) return;
+                      const userParts = userMsg.parts;
+                      const history = (updatedSession?.messages.slice(0, i) ?? []).slice(-20);
+                      
+                      const rotator  = new KeyRotator(apiKeys);
+                      rotator.setCurrentIndex(rotationIndex);
+                      const response = await sendMessage({ model: selectedModel, history, userParts, rotator, mode });
+                      setRotationIndex(rotator.getCurrentIndex());
+                      appendMessage(activeSessionId, { role: "model", parts: [{ text: response.text }] });
+                      if (response.usage) {
+                        recordUsage({
+                          apiKeyId: response.usedKeyId,
+                          apiKeyName: response.usedKeyName,
+                          model: selectedModel,
+                          promptTokens: response.usage.promptTokens,
+                          completionTokens: response.usage.completionTokens,
+                          totalTokens: response.usage.totalTokens,
+                        });
+                      }
+                    } catch (err) {
+                      setLocalError(err instanceof Error ? err.message : "Something went wrong.");
+                    } finally {
+                      setLoading(false);
+                    }
+                  };
+
+                  return (
+                    <ChatBubble
+                      key={i}
+                      message={msg}
+                      isLastMessage={isLast || (msg.role === "user" && !nextMsg)}
+                      hasError={hasErr}
+                      onEdit={msg.role === "user" ? handleEditMessage : undefined}
+                      onResend={msg.role === "user" ? handleResendMessage : undefined}
+                    />
+                  );
+                })}
 
                 {isLoading && (
                   <div style={{ display: "flex", gap: "16px", alignItems: "flex-start", padding: "8px 0" }}>
