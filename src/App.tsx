@@ -524,20 +524,19 @@ const App: React.FC = () => {
             >
               {/* Attachment strip */}
               {attachments.length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-3">
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "12px" }}>
                   {attachments.map((att, i) => (
-                    <div key={i} className="relative group rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(213,205,197,0.50)" }}>
+                    <div key={i} style={{ border: "1px solid var(--border-color)", borderRadius: "16px", overflow: "hidden", position: "relative" }}>
                       {att.previewUrl ? (
-                        <img src={att.previewUrl} className="h-14 w-14 object-cover" alt="" />
+                        <img src={att.previewUrl} alt="" style={{ height: "56px", width: "56px", objectFit: "cover" }} />
                       ) : (
-                        <div className="h-14 w-24 flex flex-col items-center justify-center" style={{ background: "#f3f0ec" }}>
+                        <div style={{ height: "56px", width: "96px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "var(--input-bg)" }}>
                           <Icon name="description" size={18} />
-                          <p style={{ fontSize: "9px", color: "#8a817a", marginTop: "2px" }}>{att.file.name}</p>
+                          <p style={{ fontSize: "9px", color: "var(--text-color-muted)", marginTop: "2px", maxWidth: "80px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", margin: 0 }}>{att.file.name}</p>
                         </div>
                       )}
                       <button onClick={() => removeAttachment(i)}
-                        className="absolute top-1 right-1 w-5 h-5 flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                        style={{ background: "rgba(0,0,0,0.45)" }}>
+                        style={{ position: "absolute", top: "4px", right: "4px", width: "20px", height: "20px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", background: "rgba(0,0,0,0.45)", border: "none", cursor: "pointer" }}>
                         <Icon name="close" size={12} className="" style={{ color: "white" } as React.CSSProperties} />
                       </button>
                     </div>
@@ -712,6 +711,27 @@ const App: React.FC = () => {
 
             {/* Chat input */}
             <div className="flex-shrink-0 px-6 pb-4" style={{ maxWidth: "860px", margin: "0 auto", width: "100%" }}>
+              {/* Attachment strip */}
+              {attachments.length > 0 && (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "12px" }}>
+                  {attachments.map((att, i) => (
+                    <div key={i} style={{ border: "1px solid var(--border-color)", borderRadius: "16px", overflow: "hidden", position: "relative" }}>
+                      {att.previewUrl ? (
+                        <img src={att.previewUrl} alt="" style={{ height: "56px", width: "56px", objectFit: "cover" }} />
+                      ) : (
+                        <div style={{ height: "56px", width: "96px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "var(--input-bg)" }}>
+                          <Icon name="description" size={18} />
+                          <p style={{ fontSize: "9px", color: "var(--text-color-muted)", marginTop: "2px", maxWidth: "80px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", margin: 0 }}>{att.file.name}</p>
+                        </div>
+                      )}
+                      <button onClick={() => removeAttachment(i)}
+                        style={{ position: "absolute", top: "4px", right: "4px", width: "20px", height: "20px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", background: "rgba(0,0,0,0.45)", border: "none", cursor: "pointer" }}>
+                        <Icon name="close" size={12} className="" style={{ color: "white" } as React.CSSProperties} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
               <div className="input-card" style={{ padding: "20px 28px 16px 28px" }}>
                 <textarea
                   ref={chatInputRef}
