@@ -80,7 +80,7 @@ const DockItem: React.FC<{
 }> = ({ icon, label, active, filled, onClick }) => (
   <button
     onClick={onClick}
-    className="flex flex-col items-center justify-center w-14 h-14 rounded-xl transition-all gap-0.5"
+    className="flex flex-col items-center justify-center w-12 h-12 rounded-xl transition-all gap-0.5"
     style={{
       background: active ? "rgba(177,98,77,0.10)" : "transparent",
       color: active ? "#b1624d" : "#6e6761",
@@ -937,7 +937,7 @@ const App: React.FC = () => {
           transform: isDockVisible ? "translateX(-50%)" : "translateX(-150vw)",
           opacity: isDockVisible ? 1 : 0,
           pointerEvents: isDockVisible ? "auto" : "none",
-          padding: "8px",
+          padding: "6px 12px",
           gap: "4px",
         }}
       >
@@ -959,13 +959,13 @@ const App: React.FC = () => {
         <DockItem icon="folder"        label="HISTORY"     onClick={() => setView("history")} />
         <DockItem icon="deployed_code" label="AGENTS"      onClick={() => setView("skills")} />
 
-        <div style={{ width: "1px", height: "28px", background: "rgba(213,205,197,0.45)", margin: "0 8px" }} />
+        <div style={{ width: "1px", height: "20px", background: "rgba(213,205,197,0.45)", margin: "0 8px" }} />
 
         {/* User avatar */}
         <div
           className="flex items-center justify-center rounded-full font-bold cursor-pointer select-none"
           style={{
-            width: "40px", height: "40px",
+            width: "36px", height: "36px",
             background: "#d9e5dd",
             color: "#1a2c24",
             fontFamily: "'JetBrains Mono', monospace",
@@ -979,7 +979,7 @@ const App: React.FC = () => {
         <button
           onClick={() => setView("settings")}
           className="flex items-center justify-center rounded-full transition-colors"
-          style={{ width: "40px", height: "40px", color: "var(--text-color-muted)", background: "transparent" }}
+          style={{ width: "36px", height: "36px", color: "var(--text-color-muted)", background: "transparent" }}
           onMouseEnter={(e) => (e.currentTarget.style.background = "var(--input-bg)")}
           onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
         >

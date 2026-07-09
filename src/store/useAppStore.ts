@@ -62,6 +62,7 @@ interface AppState {
   removeApiKey: (id: string) => void;
   updateKeyStatus: (id: string, status: KeyStatus) => void;
   updateKeyName: (id: string, name: string) => void;
+  reorderApiKeys: (startIndex: number, endIndex: number) => void;
 
   // Mode
   mode: AppMode;
@@ -143,6 +144,13 @@ export const useAppStore = create<AppState>()(
         set((s) => ({
           apiKeys: s.apiKeys.map((k) => (k.id === id ? { ...k, name } : k)),
         })),
+      reorderApiKeys: (startIndex, endIndex) =>
+        set((s) => {
+          const result = Array.from(s.apiKeys);
+          const [removed] = result.splice(startIndex, 1);
+          result.splice(endIndex, 0, removed);
+          return { apiKeys: result };
+        }),
 
       // ── Mode ──────────────────────────────────────────────────────────────
       mode: "normal",

@@ -39,6 +39,7 @@ const SettingsView: React.FC = () => {
   const removeApiKey      = useAppStore((s) => s.removeApiKey);
   const updateKeyName     = useAppStore((s) => s.updateKeyName);
   const updateKeyStatus   = useAppStore((s) => s.updateKeyStatus);
+  const reorderApiKeys    = useAppStore((s) => s.reorderApiKeys);
   const historyEnabled    = useAppStore((s) => s.historyEnabled);
   const setHistoryEnabled = useAppStore((s) => s.setHistoryEnabled);
   const sessions          = useAppStore((s) => s.sessions);
@@ -466,6 +467,36 @@ const SettingsView: React.FC = () => {
                               >
                                 {isT ? "Testing…" : "Test"}
                               </button>
+
+                              {/* Move Up */}
+                              <button
+                                onClick={() => idx > 0 && reorderApiKeys(idx, idx - 1)}
+                                disabled={idx === 0}
+                                style={{
+                                  background: "transparent", border: "none", cursor: idx === 0 ? "default" : "pointer",
+                                  color: idx === 0 ? "var(--border-color)" : "var(--text-color-muted)",
+                                  display: "flex", alignItems: "center", justifyContent: "center"
+                                }}
+                                title="Move Up"
+                              >
+                                <Icon name="keyboard_arrow_up" size={20} />
+                              </button>
+
+                              {/* Move Down */}
+                              <button
+                                onClick={() => idx < apiKeys.length - 1 && reorderApiKeys(idx, idx + 1)}
+                                disabled={idx === apiKeys.length - 1}
+                                style={{
+                                  background: "transparent", border: "none", cursor: idx === apiKeys.length - 1 ? "default" : "pointer",
+                                  color: idx === apiKeys.length - 1 ? "var(--border-color)" : "var(--text-color-muted)",
+                                  display: "flex", alignItems: "center", justifyContent: "center"
+                                }}
+                                title="Move Down"
+                              >
+                                <Icon name="keyboard_arrow_down" size={20} />
+                              </button>
+
+                              <div style={{ width: "1px", height: "16px", background: "var(--border-color)", margin: "0 4px" }} />
 
                               {/* Edit */}
                               <button
