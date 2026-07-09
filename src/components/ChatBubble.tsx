@@ -140,7 +140,7 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ message, onEdit, onResend, isLa
       </div>
 
       {/* Content wrapper */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "4px", maxWidth: "85%" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: "4px", flex: 1, minWidth: 0 }}>
         <div
           style={{
             fontFamily: "'Crimson Pro', serif",
@@ -154,7 +154,7 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ message, onEdit, onResend, isLa
             components={{
               code({ className, children, ...props }) {
                 const match = /language-(\w+)/.exec(className || "");
-                const isInline = !match;
+                const isInline = !match && !String(children).includes("\n");
                 return isInline ? (
                   <code
                     style={{
@@ -165,6 +165,8 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ message, onEdit, onResend, isLa
                       borderRadius: "4px",
                       padding: "1px 6px",
                       color: "#344e40",
+                      wordBreak: "break-word",
+                      whiteSpace: "pre-wrap",
                     }}
                     {...props}
                   >
@@ -173,7 +175,7 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ message, onEdit, onResend, isLa
                 ) : (
                   <SyntaxHighlighter
                     style={oneLight}
-                    language={match[1]}
+                    language={match ? match[1] : "text"}
                     PreTag="div"
                     customStyle={{
                       borderRadius: "1rem",

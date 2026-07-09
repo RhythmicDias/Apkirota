@@ -689,7 +689,7 @@ const App: React.FC = () => {
           <div className="flex-1 flex flex-col">
             {/* Messages */}
             <div className="flex-1 overflow-y-auto px-6 py-6">
-              <div style={{ maxWidth: "860px", margin: "0 auto", width: "100%", display: "flex", flexDirection: "column", gap: "12px" }}>
+              <div style={{ maxWidth: "760px", margin: "0 auto", width: "100%", display: "flex", flexDirection: "column", gap: "12px" }}>
                 {messages.map((msg, i) => {
                   const isLast = i === messages.length - 1;
                   const nextMsg = messages[i + 1];
@@ -798,7 +798,7 @@ const App: React.FC = () => {
             </div>
 
             {/* Chat input */}
-            <div className="flex-shrink-0 px-6 pb-4" style={{ maxWidth: "860px", margin: "0 auto", width: "100%" }}>
+            <div className="flex-shrink-0 px-6 pb-4" style={{ maxWidth: "760px", margin: "0 auto", width: "100%" }}>
               {/* Attachment strip */}
               {attachments.length > 0 && (
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "12px" }}>
