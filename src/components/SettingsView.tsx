@@ -9,6 +9,7 @@ import { useAppStore } from "../store/useAppStore";
 import { testKey } from "../lib/geminiClient";
 import type { KeyStatus } from "../lib/KeyRotator";
 import { invoke } from "@tauri-apps/api/core";
+import { ModelConfigPanel } from "./ModelConfigPanel";
 
 const STATUS_CFG: Record<KeyStatus, { label: string; color: string; dot: string }> = {
   unchecked:      { label: "Unchecked",    color: "#8a817a",  dot: "#8a817a" },
@@ -53,7 +54,7 @@ const SettingsView: React.FC = () => {
   const [newName, setNewName]         = useState("");
   const [newKey, setNewKey]           = useState("");
   const [testing, setTesting]         = useState<Set<string>>(new Set());
-  const [activeTab, setActiveTab]     = useState<"api" | "privacy" | "usage">("api");
+  const [activeTab, setActiveTab]     = useState<"api" | "model" | "privacy" | "usage">("api");
   const [formError, setFormError]     = useState<string | null>(null);
 
   // Edit states for existing keys
@@ -233,6 +234,26 @@ const SettingsView: React.FC = () => {
           )}
         </button>
         <button
+          onClick={() => setActiveTab("model")}
+          style={{
+            padding: "10px 20px",
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: "13px",
+            letterSpacing: "0.02em",
+            fontWeight: 500,
+            cursor: "pointer",
+            background: "transparent",
+            border: "none",
+            color: activeTab === "model" ? "var(--primary)" : "var(--text-color-muted)",
+            position: "relative"
+          }}
+        >
+          Model Settings
+          {activeTab === "model" && (
+            <div style={{ position: "absolute", bottom: 0, left: 0, width: "100%", height: "2px", background: "var(--primary)" }} />
+          )}
+        </button>
+        <button
           onClick={() => setActiveTab("privacy")}
           style={{
             padding: "10px 20px",
@@ -381,7 +402,9 @@ const SettingsView: React.FC = () => {
                   </div>
                 ) : (
                   apiKeys.map((key, idx) => {
-                    const cfg = STATUS_CFG[key.status];
+                    const isCooldownOver = key.cooldownUntil && Date.now() > key.cooldownUntil;
+                    const displayStatus = (key.status === "rate-limited" && isCooldownOver) ? "unchecked" : key.status;
+                    const cfg = STATUS_CFG[displayStatus];
                     const isT = testing.has(key.id);
                     const isEditing = editingId === key.id;
 
@@ -526,6 +549,12 @@ const SettingsView: React.FC = () => {
                 )}
               </div>
             </div>
+          </div>
+        )}
+
+        {activeTab === "model" && (
+          <div className="fade-in">
+            <ModelConfigPanel />
           </div>
         )}
 

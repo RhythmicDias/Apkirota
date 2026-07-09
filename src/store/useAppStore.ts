@@ -15,18 +15,53 @@ import type { ChatMessage } from "../lib/geminiClient";
 export type AppMode = "normal" | "unlimited";
 
 export const SUPPORTED_MODELS = [
-  "antigravity-preview-05-2026",
   "gemini-3.5-flash",
   "gemini-3.1-flash-lite",
   "gemini-2.5-flash-lite",
   "gemini-2.5-flash",
   "gemini-2.0-flash-lite",
-  "gemma-4-31b-it",
-  "gemma-4-26b-a4b-it",
   "gemini-robotics-er-1.6-preview",
 ] as const;
 
 export type GeminiModel = (typeof SUPPORTED_MODELS)[number];
+
+export interface ModelConfig {
+  systemInstructions: string;
+  thinkingLevel: "Low" | "Medium" | "High";
+  tools: {
+    structuredOutputs: boolean;
+    codeExecution: boolean;
+    functionCalling: boolean;
+    groundingGoogleSearch: boolean;
+    groundingGoogleMaps: boolean;
+    urlContext: boolean;
+  };
+  advanced: {
+    mediaResolution: "Low" | "Default" | "High";
+    safetySettings: string;
+    stopSequences: string;
+    outputLength: number;
+  };
+}
+
+export const DEFAULT_MODEL_CONFIG: ModelConfig = {
+  systemInstructions: "",
+  thinkingLevel: "Medium",
+  tools: {
+    structuredOutputs: false,
+    codeExecution: false,
+    functionCalling: false,
+    groundingGoogleSearch: false,
+    groundingGoogleMaps: false,
+    urlContext: false,
+  },
+  advanced: {
+    mediaResolution: "Default",
+    safetySettings: "Block Some",
+    stopSequences: "",
+    outputLength: 8192,
+  },
+};
 
 export interface ChatSession {
   id: string;
@@ -68,7 +103,11 @@ interface AppState {
   mode: AppMode;
   setMode: (mode: AppMode) => void;
 
-  // Model
+  // Model configs
+  modelConfigs: Record<string, ModelConfig>;
+  updateModelConfig: (model: string, config: Partial<ModelConfig>) => void;
+
+  // Selected Model
   selectedModel: GeminiModel;
   setModel: (model: GeminiModel) => void;
 
@@ -156,7 +195,18 @@ export const useAppStore = create<AppState>()(
       mode: "normal",
       setMode: (mode) => set({ mode }),
 
-      // ── Model ─────────────────────────────────────────────────────────────
+      // ── Models ────────────────────────────────────────────────────────────
+      modelConfigs: {},
+      updateModelConfig: (model, config) =>
+        set((s) => ({
+          modelConfigs: {
+            ...s.modelConfigs,
+            [model]: {
+              ...(s.modelConfigs[model] || DEFAULT_MODEL_CONFIG),
+              ...config,
+            },
+          },
+        })),
       selectedModel: "gemini-2.5-flash",
       setModel: (model) => set({ selectedModel: model }),
 
@@ -325,6 +375,7 @@ export const useAppStore = create<AppState>()(
         theme: state.theme,
         usageRecords: state.usageRecords,
         rotationIndex: state.rotationIndex,
+        modelConfigs: state.modelConfigs,
       }),
     }
   )

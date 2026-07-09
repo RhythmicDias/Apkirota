@@ -125,6 +125,7 @@ const App: React.FC = () => {
   const apiKeys         = useAppStore((s) => s.apiKeys);
   const selectedModel   = useAppStore((s) => s.selectedModel);
   const setModel        = useAppStore((s) => s.setModel);
+  const modelConfigs    = useAppStore((s) => s.modelConfigs);
   const isLoading       = useAppStore((s) => s.isLoading);
   const setLoading      = useAppStore((s) => s.setLoading);
   const currentView     = useAppStore((s) => s.currentView);
@@ -271,7 +272,8 @@ const App: React.FC = () => {
       const rotator  = new KeyRotator(apiKeys);
       rotator.setCurrentIndex(rotationIndex);
       const history  = (activeSession?.messages ?? []).slice(-20);
-      const response = await sendMessage({ model: selectedModel, history, userParts, rotator, mode });
+      const modelConfig = modelConfigs[selectedModel];
+      const response = await sendMessage({ model: selectedModel, history, userParts, rotator, mode, modelConfig });
       setRotationIndex(rotator.getCurrentIndex());
       appendMessage(currentSessionId, { role: "model", parts: [{ text: response.text }] });
       if (response.usage) {
@@ -305,14 +307,11 @@ const App: React.FC = () => {
   const canSend  = (text.trim().length > 0 || attachments.length > 0) && !isLoading;
 
   const modelLabel = (m: string) =>
-    m === "antigravity-preview-05-2026" ? "Antigravity"
-    : m === "gemini-3.5-flash" ? "Gemini 3.5 Flash"
+    m === "gemini-3.5-flash" ? "Gemini 3.5 Flash"
     : m === "gemini-3.1-flash-lite" ? "Gemini 3.1 Flash Lite"
     : m === "gemini-2.5-flash-lite" ? "Gemini 2.5 Flash-Lite"
     : m === "gemini-2.5-flash" ? "Gemini 2.5 Flash"
     : m === "gemini-2.0-flash-lite" ? "Gemini 2.0 Flash-Lite"
-    : m === "gemma-4-31b-it" ? "Gemma 4 31B"
-    : m === "gemma-4-26b-a4b-it" ? "Gemma 4 26B"
     : m === "gemini-robotics-er-1.6-preview" ? "Gemini Robotics-ER 1.6 Preview"
     : m;
 
@@ -720,7 +719,8 @@ const App: React.FC = () => {
                       
                       const rotator  = new KeyRotator(apiKeys);
                       rotator.setCurrentIndex(rotationIndex);
-                      const response = await sendMessage({ model: selectedModel, history, userParts, rotator, mode });
+                      const modelConfig = modelConfigs[selectedModel];
+                      const response = await sendMessage({ model: selectedModel, history, userParts, rotator, mode, modelConfig });
                       setRotationIndex(rotator.getCurrentIndex());
                       appendMessage(activeSessionId, { role: "model", parts: [{ text: response.text }] });
                       if (response.usage) {
@@ -755,7 +755,8 @@ const App: React.FC = () => {
                       
                       const rotator  = new KeyRotator(apiKeys);
                       rotator.setCurrentIndex(rotationIndex);
-                      const response = await sendMessage({ model: selectedModel, history, userParts, rotator, mode });
+                      const modelConfig = modelConfigs[selectedModel];
+                      const response = await sendMessage({ model: selectedModel, history, userParts, rotator, mode, modelConfig });
                       setRotationIndex(rotator.getCurrentIndex());
                       appendMessage(activeSessionId, { role: "model", parts: [{ text: response.text }] });
                       if (response.usage) {

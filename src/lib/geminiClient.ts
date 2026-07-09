@@ -5,6 +5,7 @@
 
 import { invoke } from "@tauri-apps/api/core";
 import { KeyRotator } from "./KeyRotator";
+import type { ModelConfig } from "../store/useAppStore";
 
 const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 const MAX_RETRIES = 3;
@@ -28,6 +29,7 @@ export interface SendMessageOptions {
   rotator: KeyRotator;
   mode: "normal" | "unlimited";
   systemPrompt?: string;
+  modelConfig?: ModelConfig;
 }
 
 export interface GeminiResponse {
@@ -45,20 +47,49 @@ export interface GeminiResponse {
 function buildPayload(
   history: ChatMessage[],
   userParts: ChatPart[],
-  systemPrompt?: string
+  systemPrompt?: string,
+  modelConfig?: ModelConfig
 ) {
+  const tools: any[] = [];
+  if (modelConfig?.tools?.codeExecution) {
+    tools.push({ code_execution: {} });
+  }
+  if (modelConfig?.tools?.groundingGoogleSearch) {
+    tools.push({ googleSearch: {} });
+  }
+  // Optional: implement functionCalling if needed, or structuredOutputs
+  
+  const finalSystemPrompt = modelConfig?.systemInstructions || systemPrompt;
+  
+  const stopSequences = modelConfig?.advanced?.stopSequences
+    ? modelConfig.advanced.stopSequences.split(",").map((s) => s.trim()).filter(Boolean)
+    : undefined;
+
+  let safetySettings: any[] | undefined = undefined;
+  if (modelConfig?.advanced?.safetySettings === "Block None") {
+    safetySettings = [
+      { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+      { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+      { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+      { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
+    ];
+  }
+
   return {
-    ...(systemPrompt
-      ? { system_instruction: { parts: [{ text: systemPrompt }] } }
+    ...(finalSystemPrompt
+      ? { systemInstruction: { parts: [{ text: finalSystemPrompt }] } }
       : {}),
     contents: [
       ...history,
       { role: "user", parts: userParts },
     ],
+    ...(tools.length > 0 ? { tools } : {}),
+    ...(safetySettings ? { safetySettings } : {}),
     generationConfig: {
       temperature: 1,
       topP: 0.95,
-      maxOutputTokens: 8192,
+      maxOutputTokens: modelConfig?.advanced?.outputLength || 8192,
+      ...(stopSequences && stopSequences.length > 0 ? { stopSequences } : {}),
     },
   };
 }
@@ -98,7 +129,7 @@ export async function sendMessage(
     }
 
     const url = `${GEMINI_BASE}/${opts.model}:generateContent?key=${rawKeyValue}`;
-    const body = buildPayload(opts.history, opts.userParts, opts.systemPrompt);
+    const body = buildPayload(opts.history, opts.userParts, opts.systemPrompt, opts.modelConfig);
 
     try {
       const res = await fetch(url, {
