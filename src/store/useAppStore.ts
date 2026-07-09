@@ -121,8 +121,9 @@ interface AppState {
   renameSession: (id: string, title: string) => void;
   clearAllSessions: () => void;
   clearSessionMessages: (id: string) => void;
-  updateMessageText: (sessionId: string, messageIndex: number, newText: string) => void;
-  removeSubsequentMessages: (sessionId: string, messageIndex: number) => void;
+  updateMessageText: (sessionId: string, messageIndex: number, text: string) => void;
+  updateMessageUsage: (sessionId: string, messageIndex: number, usage: any) => void;
+  removeSubsequentMessages: (sessionId: string, fromIndex: number) => void;
 
   // Skills
   skills: Skill[];
@@ -292,6 +293,23 @@ export const useAppStore = create<AppState>()(
                             p.text !== undefined ? { ...p, text: newText } : p
                           ),
                         }
+                      : msg
+                  ),
+                  updatedAt: Date.now(),
+                }
+              : sess
+          ),
+        })),
+
+      updateMessageUsage: (sessionId, messageIndex, usage) =>
+        set((s) => ({
+          sessions: s.sessions.map((sess) =>
+            sess.id === sessionId
+              ? {
+                  ...sess,
+                  messages: sess.messages.map((msg, idx) =>
+                    idx === messageIndex
+                      ? { ...msg, usage: { ...msg.usage, ...usage } }
                       : msg
                   ),
                   updatedAt: Date.now(),

@@ -137,6 +137,7 @@ const App: React.FC = () => {
   const setRotationIndex = useAppStore((s) => s.setRotationIndex);
   const clearSessionMessages = useAppStore((s) => s.clearSessionMessages);
   const updateMessageText = useAppStore((s) => s.updateMessageText);
+  const updateMessageUsage = useAppStore((s) => s.updateMessageUsage);
   const removeSubsequentMessages = useAppStore((s) => s.removeSubsequentMessages);
 
   const [text, setText]               = useState("");
@@ -275,7 +276,16 @@ const App: React.FC = () => {
       const modelConfig = modelConfigs[selectedModel];
       const response = await sendMessage({ model: selectedModel, history, userParts, rotator, mode, modelConfig });
       setRotationIndex(rotator.getCurrentIndex());
-      appendMessage(currentSessionId, { role: "model", parts: [{ text: response.text }] });
+      const storeSession = useAppStore.getState().sessions.find(s => s.id === currentSessionId);
+      const userMsgIndex = storeSession ? storeSession.messages.length - 1 : -1;
+      if (response.usage && userMsgIndex >= 0) {
+        updateMessageUsage(currentSessionId, userMsgIndex, { promptTokens: response.usage.promptTokens });
+      }
+      appendMessage(currentSessionId, { 
+        role: "model", 
+        parts: [{ text: response.text }],
+        usage: { completionTokens: response.usage?.completionTokens, totalTokens: response.usage?.totalTokens }
+      });
       if (response.usage) {
         recordUsage({
           apiKeyId: response.usedKeyId,
@@ -722,7 +732,14 @@ const App: React.FC = () => {
                       const modelConfig = modelConfigs[selectedModel];
                       const response = await sendMessage({ model: selectedModel, history, userParts, rotator, mode, modelConfig });
                       setRotationIndex(rotator.getCurrentIndex());
-                      appendMessage(activeSessionId, { role: "model", parts: [{ text: response.text }] });
+                      if (response.usage) {
+                        updateMessageUsage(activeSessionId, i, { promptTokens: response.usage.promptTokens });
+                      }
+                      appendMessage(activeSessionId, { 
+                        role: "model", 
+                        parts: [{ text: response.text }],
+                        usage: { completionTokens: response.usage?.completionTokens, totalTokens: response.usage?.totalTokens }
+                      });
                       if (response.usage) {
                         recordUsage({
                           apiKeyId: response.usedKeyId,
@@ -758,7 +775,14 @@ const App: React.FC = () => {
                       const modelConfig = modelConfigs[selectedModel];
                       const response = await sendMessage({ model: selectedModel, history, userParts, rotator, mode, modelConfig });
                       setRotationIndex(rotator.getCurrentIndex());
-                      appendMessage(activeSessionId, { role: "model", parts: [{ text: response.text }] });
+                      if (response.usage) {
+                        updateMessageUsage(activeSessionId, i, { promptTokens: response.usage.promptTokens });
+                      }
+                      appendMessage(activeSessionId, { 
+                        role: "model", 
+                        parts: [{ text: response.text }],
+                        usage: { completionTokens: response.usage?.completionTokens, totalTokens: response.usage?.totalTokens }
+                      });
                       if (response.usage) {
                         recordUsage({
                           apiKeyId: response.usedKeyId,

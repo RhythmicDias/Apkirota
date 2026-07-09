@@ -102,7 +102,12 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ message, onEdit, onResend, isLa
                 </div>
               )}
               {/* Actions row */}
-              <div style={{ display: "flex", gap: "12px", opacity: 0.5, transition: "opacity 0.2s" }} onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")} onMouseLeave={(e) => (e.currentTarget.style.opacity = "0.5")}>
+              <div style={{ display: "flex", gap: "12px", opacity: 0.5, transition: "opacity 0.2s", width: "100%", alignItems: "center" }} onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")} onMouseLeave={(e) => (e.currentTarget.style.opacity = "0.5")}>
+                {message.usage?.promptTokens !== undefined && (
+                  <span style={{ fontSize: "11px", fontFamily: "'JetBrains Mono', monospace", color: "var(--text-color-muted)", marginRight: "auto" }}>
+                    Input Tokens: {message.usage.promptTokens}
+                  </span>
+                )}
                 <button onClick={handleCopy} title="Copy" style={{ background: "transparent", border: "none", cursor: "pointer", color: "var(--text-color-muted)" }}>
                   <Icon name={copied ? "check" : "content_copy"} size={16} />
                 </button>
@@ -240,7 +245,12 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ message, onEdit, onResend, isLa
         </div>
 
         {/* Actions row */}
-        <div style={{ display: "flex", gap: "12px", opacity: 0.5, transition: "opacity 0.2s", marginTop: "2px" }} onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")} onMouseLeave={(e) => (e.currentTarget.style.opacity = "0.5")}>
+        <div style={{ display: "flex", gap: "12px", opacity: 0.5, transition: "opacity 0.2s", marginTop: "2px", alignItems: "center" }} onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")} onMouseLeave={(e) => (e.currentTarget.style.opacity = "0.5")}>
+          {message.usage?.completionTokens !== undefined && (
+            <span style={{ fontSize: "11px", fontFamily: "'JetBrains Mono', monospace", color: "var(--text-color-muted)", marginRight: "auto" }}>
+              Output: {message.usage.completionTokens} | Total: {message.usage.totalTokens}
+            </span>
+          )}
           <button onClick={handleCopy} title="Copy" style={{ background: "transparent", border: "none", cursor: "pointer", color: "var(--text-color-muted)" }}>
             <Icon name={copied ? "check" : "content_copy"} size={16} />
           </button>

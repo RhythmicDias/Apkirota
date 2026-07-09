@@ -20,6 +20,11 @@ export interface ChatPart {
 export interface ChatMessage {
   role: ChatRole;
   parts: ChatPart[];
+  usage?: {
+    promptTokens?: number;
+    completionTokens?: number;
+    totalTokens?: number;
+  };
 }
 
 export interface SendMessageOptions {
@@ -80,7 +85,7 @@ function buildPayload(
       ? { systemInstruction: { parts: [{ text: finalSystemPrompt }] } }
       : {}),
     contents: [
-      ...history,
+      ...history.map(msg => ({ role: msg.role, parts: msg.parts })),
       { role: "user", parts: userParts },
     ],
     ...(tools.length > 0 ? { tools } : {}),
@@ -140,7 +145,10 @@ export async function sendMessage(
 
       if (res.status === 429) {
         let errText = "";
-        try { errText = await res.text(); } catch (e) {}
+        try {
+          const raw = await res.text();
+          try { errText = JSON.parse(raw)?.error?.message || raw; } catch(e) { errText = raw; }
+        } catch (e) { errText = "Unknown API error"; }
         opts.rotator.reportRateLimit(entry.id);
         lastError = new Error(`Key "${entry.name}" rate-limited (attempt ${attempt + 1}/${MAX_RETRIES}). Details: ${errText}`);
         continue; // retry with next key
@@ -148,14 +156,22 @@ export async function sendMessage(
 
       if (res.status === 400 || res.status === 401 || res.status === 403) {
         let errText = "";
-        try { errText = await res.text(); } catch (e) {}
+        try {
+          const raw = await res.text();
+          try { errText = JSON.parse(raw)?.error?.message || raw; } catch(e) { errText = raw; }
+        } catch (e) { errText = "Unknown API error"; }
         opts.rotator.reportInvalid(entry.id);
         lastError = new Error(`Key "${entry.name}" is invalid or unauthorized (attempt ${attempt + 1}/${MAX_RETRIES}). Details: ${errText}`);
         continue;
       }
 
       if (!res.ok) {
-        throw new Error(`Gemini API error: ${res.status} ${res.statusText}`);
+        let errText = "";
+        try {
+          const raw = await res.text();
+          try { errText = JSON.parse(raw)?.error?.message || raw; } catch(e) { errText = raw; }
+        } catch (e) {}
+        throw new Error(`Gemini API error ${res.status}: ${errText || res.statusText}`);
       }
 
       const json = await res.json();
