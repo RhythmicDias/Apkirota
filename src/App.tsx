@@ -20,6 +20,14 @@ import { sendMessage } from "./lib/geminiClient";
 import type { ChatPart } from "./lib/geminiClient";
 import { processFile, getPreviewUrl } from "./lib/fileProcessor";
 
+function getTimeBasedGreeting() {
+  const hour = new Date().getHours();
+  if (hour >= 5 && hour < 12) return "early bird";
+  if (hour >= 12 && hour < 17) return "afternoon";
+  if (hour >= 17 && hour < 22) return "evening";
+  return "night owl";
+}
+
 // ─── Icon helper ───────────────────────────────────────────
 const Icon = ({
   name,
@@ -516,7 +524,7 @@ const App: React.FC = () => {
             >
               Hello,{" "}
               <span style={{ fontStyle: "italic", fontWeight: 300, color: "#6b8a7a" }}>
-                night owl
+                {getTimeBasedGreeting()}
               </span>
             </h1>
 
@@ -689,7 +697,7 @@ const App: React.FC = () => {
           ────────────────────────────────────────── */
           <div className="flex-1 relative overflow-hidden">
             {/* Messages */}
-            <div className="absolute inset-0 overflow-y-auto px-6 pt-6" style={{ paddingBottom: "180px" }}>
+            <div className="absolute inset-0 overflow-y-auto px-6 pt-6" style={{ paddingBottom: "24px" }}>
               <div style={{ maxWidth: "760px", margin: "0 auto", width: "100%", display: "flex", flexDirection: "column", gap: "12px" }}>
                 {messages.map((msg, i) => {
                   const isLast = i === messages.length - 1;
@@ -802,8 +810,7 @@ const App: React.FC = () => {
             <div className="absolute bottom-0 left-0 right-0 px-6 pointer-events-none flex flex-col justify-end"
                  style={{
                    paddingBottom: isDockVisible ? "90px" : "30px",
-                   paddingTop: "60px",
-                   background: "linear-gradient(to bottom, transparent, var(--bg-color) 70%, var(--bg-color))",
+                   paddingTop: "20px",
                    zIndex: 10,
                    transition: "padding-bottom 0.5s ease"
                  }}>
@@ -829,7 +836,7 @@ const App: React.FC = () => {
                   ))}
                 </div>
               )}
-              <div className="input-card" style={{ padding: "20px 28px 16px 28px" }}>
+              <div className="input-card" style={{ padding: "12px 20px 12px 20px" }}>
                 <textarea
                   ref={chatInputRef}
                   value={text}
@@ -844,7 +851,7 @@ const App: React.FC = () => {
                     lineHeight: "26px", color: "var(--text-color)", caretColor: "var(--primary)",
                   }}
                 />
-                <div className="flex items-center justify-between" style={{ marginTop: "12px" }}>
+                <div className="flex items-center justify-between" style={{ marginTop: "8px" }}>
                   <button onClick={() => fileInputRef.current?.click()}
                     className="flex items-center justify-center rounded-full transition-colors"
                     style={{ width: "38px", height: "38px", border: "1px solid var(--border-color)", color: "var(--text-color-muted)", background: "transparent" }}
