@@ -35,6 +35,38 @@ fn delete_api_key(key_id: String) -> Result<(), String> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .setup(|app| {
+            #[cfg(desktop)]
+            {
+                use tauri::menu::{Menu, MenuItem};
+                use tauri::tray::TrayIconBuilder;
+                use tauri::Manager;
+                use tauri::Emitter;
+
+                let settings_i = MenuItem::with_id(app, "settings", "Settings", true, None::<&str>)?;
+                let quit_i = MenuItem::with_id(app, "quit", "Exit", true, None::<&str>)?;
+                let menu = Menu::with_items(app, &[&settings_i, &quit_i])?;
+
+                TrayIconBuilder::new()
+                    .menu(&menu)
+                    .on_menu_event(|app, event| match event.id.as_ref() {
+                        "quit" => {
+                            std::process::exit(0);
+                        }
+                        "settings" => {
+                            if let Some(window) = app.get_webview_window("main") {
+                                window.show().unwrap();
+                                window.set_focus().unwrap();
+                            }
+                            app.emit("open-settings", ()).unwrap();
+                        }
+                        _ => {}
+                    })
+                    .icon(app.default_window_icon().unwrap().clone())
+                    .build(app)?;
+            }
+            Ok(())
+        })
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())

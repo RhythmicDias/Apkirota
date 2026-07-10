@@ -16,6 +16,7 @@ import HistoryView from "./components/HistoryView";
 import SkillsView from "./components/SkillsView";
 import TitleBar from "./components/TitleBar";
 import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 import { useAppStore, selectActiveSession, SUPPORTED_MODELS } from "./store/useAppStore";
 import { KeyRotator } from "./lib/KeyRotator";
 import { sendMessage, uploadFileToGemini } from "./lib/geminiClient";
@@ -158,6 +159,20 @@ const App: React.FC = () => {
 
   const [isRecording, setIsRecording] = useState(false);
   const recognitionRef = useRef<any>(null);
+
+  useEffect(() => {
+    let unlistenFn: (() => void) | undefined;
+    const setupTrayListener = async () => {
+      const unlisten = await listen("open-settings", () => {
+        setView("settings");
+      });
+      return unlisten;
+    };
+    setupTrayListener().then((fn) => { unlistenFn = fn; });
+    return () => {
+      if (unlistenFn) unlistenFn();
+    };
+  }, [setView]);
 
   useEffect(() => {
     // @ts-ignore
