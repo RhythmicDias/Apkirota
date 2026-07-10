@@ -22,6 +22,7 @@ const SkillsView: React.FC = () => {
   const [editPrompt, setEditPrompt] = useState("");
   
   const [expandedIds, setExpandedIds] = useState<string[]>([]);
+  const [isCreating, setIsCreating] = useState(false);
 
   const toggleCollapse = (id: string) => {
     setExpandedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
@@ -33,6 +34,7 @@ const SkillsView: React.FC = () => {
     createSkill(newName.trim(), newPrompt.trim());
     setNewName("");
     setNewPrompt("");
+    setIsCreating(false);
   };
 
   const startEdit = (skill: any) => {
@@ -71,12 +73,25 @@ const SkillsView: React.FC = () => {
         </h2>
       </div>
 
-      {/* Create Form */}
-      <form onSubmit={handleCreate} className="flex flex-col gap-4" style={{ marginBottom: "40px", padding: "24px", background: "var(--input-bg)", borderRadius: "16px", border: "1px solid var(--border-color)" }}>
-        <h3 style={{ fontSize: "18px", fontWeight: 600, margin: 0 }}>Create New Skill</h3>
-        <input
-          type="text"
-          placeholder="Skill Name (e.g. Code Reviewer)"
+      {/* Create Form / Button */}
+      {!isCreating ? (
+        <button
+          onClick={() => setIsCreating(true)}
+          style={{ marginBottom: "40px", padding: "12px 24px", background: "var(--primary)", color: "white", borderRadius: "8px", fontWeight: 600, display: "flex", alignItems: "center", gap: "8px" }}
+        >
+          <Icon name="add" size={20} /> Create New Skill
+        </button>
+      ) : (
+        <form onSubmit={handleCreate} className="flex flex-col gap-4" style={{ marginBottom: "40px", padding: "24px", background: "var(--input-bg)", borderRadius: "16px", border: "1px solid var(--border-color)" }}>
+          <div className="flex justify-between items-center">
+            <h3 style={{ fontSize: "18px", fontWeight: 600, margin: 0 }}>Create New Skill</h3>
+            <button type="button" onClick={() => setIsCreating(false)} style={{ color: "var(--text-color-muted)" }} title="Cancel">
+              <Icon name="close" size={20} />
+            </button>
+          </div>
+          <input
+            type="text"
+            placeholder="Skill Name (e.g. Code Reviewer)"
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
           style={{ width: "100%", padding: "12px 16px", background: "var(--bg-color)", border: "1px solid var(--border-color)", borderRadius: "8px", outline: "none", color: "var(--text-color)" }}
@@ -88,14 +103,15 @@ const SkillsView: React.FC = () => {
           onChange={(e) => setNewPrompt(e.target.value)}
           style={{ width: "100%", padding: "12px 16px", background: "var(--bg-color)", border: "1px solid var(--border-color)", borderRadius: "8px", outline: "none", resize: "vertical", color: "var(--text-color)" }}
         />
-        <button
-          type="submit"
-          disabled={!newName.trim() || !newPrompt.trim()}
-          style={{ alignSelf: "flex-end", padding: "10px 24px", background: "var(--primary)", color: "white", borderRadius: "8px", fontWeight: 600, opacity: (!newName.trim() || !newPrompt.trim()) ? 0.5 : 1 }}
-        >
-          Create Skill
-        </button>
-      </form>
+          <button
+            type="submit"
+            disabled={!newName.trim() || !newPrompt.trim()}
+            style={{ alignSelf: "flex-end", padding: "10px 24px", background: "var(--primary)", color: "white", borderRadius: "8px", fontWeight: 600, opacity: (!newName.trim() || !newPrompt.trim()) ? 0.5 : 1 }}
+          >
+            Save Skill
+          </button>
+        </form>
+      )}
 
       {/* List */}
       <div className="flex flex-col" style={{ gap: "16px" }}>
