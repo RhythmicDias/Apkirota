@@ -42,3 +42,6 @@ keys_backup.txt
 # Logs
 logs
 *.log
+
+# Future planning documents
+FUTURE_UPDATE.md

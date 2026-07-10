@@ -67,8 +67,23 @@ function buildPayload(
   if (modelConfig?.tools?.groundingGoogleSearch) {
     tools.push({ googleSearch: {} });
   }
-  // Optional: implement functionCalling if needed, or structuredOutputs
-  
+  // Include the local DOCX generation tool
+  tools.push({
+    functionDeclarations: [
+      {
+        name: "create_docx_file",
+        description: "Generate and save a .docx document to the user's computer. Use this when the user asks you to create a Word document.",
+        parameters: {
+          type: "OBJECT",
+          properties: {
+            filename: { type: "STRING", description: "The suggested filename, ending in .docx" },
+            content: { type: "STRING", description: "The raw text content to put into the document" }
+          },
+          required: ["filename", "content"]
+        }
+      }
+    ]
+  });
   const finalSystemPrompt = modelConfig?.systemInstructions || systemPrompt;
   
   const stopSequences = modelConfig?.advanced?.stopSequences
@@ -195,8 +210,45 @@ export async function sendMessage(
       }
 
       const json = await res.json();
-      const text: string =
-        json?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+      const parts = json?.candidates?.[0]?.content?.parts ?? [];
+      let text: string = parts.find((p: any) => p.text)?.text ?? "";
+
+      const functionCallPart = parts.find((p: any) => p.functionCall);
+      if (functionCallPart) {
+        const call = functionCallPart.functionCall;
+        if (call.name === "create_docx_file") {
+          try {
+            const { Document, Packer, Paragraph, TextRun } = await import("docx");
+            const { save } = await import("@tauri-apps/plugin-dialog");
+            const { writeFile } = await import("@tauri-apps/plugin-fs");
+
+            const doc = new Document({
+              sections: [{
+                properties: {},
+                children: call.args.content.split("\n").map((line: string) => new Paragraph({ children: [new TextRun(line)] }))
+              }]
+            });
+
+            const blob = await Packer.toBlob(doc);
+            const buffer = await blob.arrayBuffer();
+
+            const filePath = await save({
+              filters: [{ name: "Word Document", extensions: ["docx"] }],
+              defaultPath: call.args.filename || "document.docx"
+            });
+
+            if (filePath) {
+              await writeFile(filePath, new Uint8Array(buffer));
+              text += `\n\n✅ **Success!** I generated the document and you saved it to \`${filePath}\`.`;
+            } else {
+              text += `\n\n❌ **Cancelled:** You cancelled saving the document.`;
+            }
+          } catch (e: any) {
+            console.error(e);
+            text += `\n\n❌ **Error:** Failed to generate document. ${e?.message || String(e)}`;
+          }
+        }
+      }
 
       const promptTokens = json?.usageMetadata?.promptTokenCount ?? 0;
       const completionTokens = json?.usageMetadata?.candidatesTokenCount ?? 0;
