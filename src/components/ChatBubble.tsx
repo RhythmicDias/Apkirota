@@ -22,6 +22,7 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ message, onEdit, onResend, isLa
   const text   = message.parts.find((p) => p.text)?.text ?? "";
   const images = message.parts.filter((p) => p.inlineData && p.inlineData.mimeType.startsWith("image/"));
   const audios = message.parts.filter((p) => (p.inlineData && p.inlineData.mimeType.startsWith("audio/")) || (p.fileData && p.fileData.mimeType.startsWith("audio/")));
+  const docs   = message.parts.filter((p) => p.fileData && !p.fileData.mimeType.startsWith("audio/") && !p.fileData.mimeType.startsWith("image/") && !p.fileData.mimeType.startsWith("video/"));
 
   const [copied, setCopied] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -60,6 +61,14 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ message, onEdit, onResend, isLa
               ) : (
                 <span style={{ fontSize: "12px", color: "var(--text-color-muted)", fontFamily: "'Crimson Pro', serif" }}>Audio File Attached</span>
               )}
+            </div>
+          ))}
+          {docs.map((part, i) => (
+            <div key={`doc-${i}`} style={{ display: "flex", alignItems: "center", gap: "8px", background: "var(--input-bg)", padding: "8px 12px", borderRadius: "1rem", border: "1px solid rgba(177, 98, 77, 0.15)" }}>
+              <Icon name="description" size={20} style={{ color: "var(--primary)" }} />
+              <span style={{ fontSize: "13px", color: "var(--text-color)", fontFamily: "'Crimson Pro', serif" }}>
+                {part.fileData?.mimeType.split("/")[1] || "Document"} Attached
+              </span>
             </div>
           ))}
           {isEditing ? (

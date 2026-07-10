@@ -173,7 +173,7 @@ const InputPanel: React.FC<InputPanelProps> = ({
               ref={fileInputRef}
               type="file"
               multiple
-              accept="image/png,image/jpeg,image/webp,text/plain,text/csv,.txt,.csv,audio/*"
+              accept="image/png,image/jpeg,image/webp,text/plain,text/csv,.txt,.csv,audio/*,application/pdf,.pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx,.doc,.rtf"
               className="hidden"
               onChange={(e) => e.target.files && handleAttach(e.target.files)}
             />

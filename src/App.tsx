@@ -231,8 +231,8 @@ const App: React.FC = () => {
     setIsAttaching(true);
     for (const file of Array.from(files)) {
       try {
-        const isAudio = file.type.startsWith("audio/") || file.name.match(/\.(mp3|wav|ogg|flac|aac|m4a|mp4|webm)$/i);
-        if (isAudio) {
+        const requiresFileApi = file.type.startsWith("audio/") || file.type.startsWith("video/") || file.type === "application/pdf" || file.name.match(/\.(mp3|wav|ogg|flac|aac|m4a|mp4|webm|pdf|doc|docx|rtf|xls|xlsx|ppt|pptx)$/i);
+        if (requiresFileApi) {
           setAttachments((prev) => [...prev, { file, previewUrl: null, parts: [], uploadProgress: 0 }]);
           
           const rotator = new KeyRotator(useAppStore.getState().apiKeys);
@@ -786,12 +786,16 @@ const App: React.FC = () => {
                       const response = await sendMessage({ model: selectedModel, history, userParts, rotator, mode, modelConfig });
                       const latencyMs = Date.now() - startTime;
                       setRotationIndex(rotator.getCurrentIndex());
-                      if (response.usage) {
-                        updateMessageUsage(activeSessionId, i, { promptTokens: response.usage.promptTokens });
-                      }
+                      updateMessageMetadata(activeSessionId, i, { 
+                        modelName: selectedModel,
+                        apiKeyName: response.usedKeyName,
+                        ...(response.usage ? { usage: { promptTokens: response.usage.promptTokens } } : {})
+                      });
                       appendMessage(activeSessionId, { 
                         role: "model", 
                         parts: [{ text: response.text }],
+                        modelName: selectedModel,
+                        apiKeyName: response.usedKeyName,
                         usage: { completionTokens: response.usage?.completionTokens, totalTokens: response.usage?.totalTokens, latencyMs }
                       });
                       if (response.usage) {
@@ -831,12 +835,16 @@ const App: React.FC = () => {
                       const response = await sendMessage({ model: selectedModel, history, userParts, rotator, mode, modelConfig });
                       const latencyMs = Date.now() - startTime;
                       setRotationIndex(rotator.getCurrentIndex());
-                      if (response.usage) {
-                        updateMessageUsage(activeSessionId, i, { promptTokens: response.usage.promptTokens });
-                      }
+                      updateMessageMetadata(activeSessionId, i, { 
+                        modelName: selectedModel,
+                        apiKeyName: response.usedKeyName,
+                        ...(response.usage ? { usage: { promptTokens: response.usage.promptTokens } } : {})
+                      });
                       appendMessage(activeSessionId, { 
                         role: "model", 
                         parts: [{ text: response.text }],
+                        modelName: selectedModel,
+                        apiKeyName: response.usedKeyName,
                         usage: { completionTokens: response.usage?.completionTokens, totalTokens: response.usage?.totalTokens, latencyMs }
                       });
                       if (response.usage) {
@@ -992,7 +1000,7 @@ const App: React.FC = () => {
         ref={fileInputRef}
         type="file"
         multiple
-        accept="image/png,image/jpeg,image/webp,text/plain,text/csv,.txt,.csv,audio/*"
+        accept="image/png,image/jpeg,image/webp,text/plain,text/csv,.txt,.csv,audio/*,application/pdf,.pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx,.doc,.rtf"
         className="hidden"
         onClick={(e) => { (e.target as HTMLInputElement).value = ''; }}
         onChange={(e) => e.target.files && handleAttach(e.target.files)}
