@@ -25,6 +25,14 @@ export const SUPPORTED_MODELS = [
 
 export type GeminiModel = (typeof SUPPORTED_MODELS)[number];
 
+const extractTitle = (message: ChatMessage): string => {
+  const text = message.parts.find(p => p.text && p.text.trim().length > 0)?.text;
+  if (text) return text.substring(0, 30);
+  const fileMime = message.parts.find(p => p.fileData)?.fileData?.mimeType || message.parts.find(p => p.inlineData)?.inlineData?.mimeType;
+  if (fileMime) return `[${fileMime.split('/')[0]} attached]`;
+  return "New Chat";
+};
+
 export interface ModelConfig {
   systemInstructions: string;
   thinkingLevel: "Low" | "Medium" | "High";
@@ -256,7 +264,7 @@ export const useAppStore = create<AppState>()(
                   // Auto-title from first user message
                   title:
                     sess.messages.length === 0 && message.role === "user"
-                      ? ((message.parts[0]?.text ?? "New Chat").slice(0, 40))
+                      ? extractTitle(message).slice(0, 40)
                       : sess.title,
                 }
               : sess
