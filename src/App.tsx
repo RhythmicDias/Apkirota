@@ -14,9 +14,10 @@ import ChatBubble from "./components/ChatBubble";
 import SettingsView from "./components/SettingsView";
 import HistoryView from "./components/HistoryView";
 import SkillsView from "./components/SkillsView";
+import { invoke } from "@tauri-apps/api/core";
 import { useAppStore, selectActiveSession, SUPPORTED_MODELS } from "./store/useAppStore";
 import { KeyRotator } from "./lib/KeyRotator";
-import { sendMessage } from "./lib/geminiClient";
+import { sendMessage, uploadFileToGemini } from "./lib/geminiClient";
 import type { ChatPart } from "./lib/geminiClient";
 import { processFile, getPreviewUrl } from "./lib/fileProcessor";
 
@@ -110,6 +111,7 @@ interface AttachedFile {
   file: File;
   previewUrl: string | null;
   parts: ChatPart[];
+  uploadProgress?: number;
 }
 
 // ══════════════════════════════════════════════════════════
@@ -143,6 +145,7 @@ const App: React.FC = () => {
   const [text, setText]               = useState("");
   const [attachments, setAttachments] = useState<AttachedFile[]>([]);
   const [isDragOver, setIsDragOver]   = useState(false);
+  const [isAttaching, setIsAttaching] = useState(false);
   const [localError, setLocalError]   = useState<string | null>(null);
   const [isDockVisible, setIsDockVisible] = useState(true);
 
@@ -225,12 +228,35 @@ const App: React.FC = () => {
   useEffect(() => { messagesEnd.current?.scrollIntoView({ behavior: "smooth" }); }, [activeSession?.messages.length]);
 
   const handleAttach = async (files: FileList | File[]) => {
+    setIsAttaching(true);
     for (const file of Array.from(files)) {
       try {
-        const parts = await processFile(file);
-        setAttachments((prev) => [...prev, { file, previewUrl: getPreviewUrl(file), parts }]);
-      } catch (e) { console.error(e); }
+        const isAudio = file.type.startsWith("audio/") || file.name.match(/\.(mp3|wav|ogg|flac|aac|m4a|mp4|webm)$/i);
+        if (isAudio) {
+          setAttachments((prev) => [...prev, { file, previewUrl: null, parts: [], uploadProgress: 0 }]);
+          
+          const rotator = new KeyRotator(useAppStore.getState().apiKeys);
+          rotator.setCurrentIndex(useAppStore.getState().rotationIndex);
+          const entry = useAppStore.getState().mode === "unlimited" ? rotator.getNextKey() : rotator.getActiveKey();
+          if (!entry) throw new Error("No API key available for upload.");
+          const rawKeyValue = await invoke<string>("load_api_key", { keyId: entry.id });
+          
+          const { fileUri, mimeType } = await uploadFileToGemini(file, rawKeyValue, (prog) => {
+            setAttachments((prev) => prev.map(a => a.file === file ? { ...a, uploadProgress: prog } : a));
+          });
+          
+          setAttachments((prev) => prev.map(a => a.file === file ? { ...a, uploadProgress: 100, parts: [{ fileData: { mimeType, fileUri }, uploadKeyId: entry.id }] } : a));
+        } else {
+          const parts = await processFile(file);
+          setAttachments((prev) => [...prev, { file, previewUrl: getPreviewUrl(file), parts }]);
+        }
+      } catch (e) { 
+        console.error(e); 
+        setLocalError(e instanceof Error ? `Attachment failed: ${e.message}` : "Failed to attach file.");
+        setAttachments((prev) => prev.filter(a => a.file !== file));
+      }
     }
+    setIsAttaching(false);
   };
 
   const removeAttachment = (i: number) => {
@@ -312,11 +338,16 @@ const App: React.FC = () => {
     }
   };
 
-  const handleNewChat = () => { createSession(); setLocalError(null); };
+  const handleNewChat = () => { 
+    createSession(); 
+    setLocalError(null); 
+    setText("");
+    setAttachments([]);
+  };
 
   const messages = activeSession?.messages ?? [];
   const hasChat  = messages.length > 0;
-  const canSend  = (text.trim().length > 0 || attachments.length > 0) && !isLoading;
+  const canSend  = (text.trim().length > 0 || attachments.length > 0) && !isLoading && attachments.every(a => a.uploadProgress === undefined || a.uploadProgress === 100);
 
   const modelLabel = (m: string) =>
     m === "gemini-3.5-flash" ? "Gemini 3.5 Flash"
@@ -552,9 +583,14 @@ const App: React.FC = () => {
                       {att.previewUrl ? (
                         <img src={att.previewUrl} alt="" style={{ height: "56px", width: "56px", objectFit: "cover" }} />
                       ) : (
-                        <div style={{ height: "56px", width: "96px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "var(--input-bg)" }}>
+                        <div style={{ height: "56px", width: "96px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "var(--input-bg)", position: "relative" }}>
+                          {att.uploadProgress !== undefined && att.uploadProgress < 100 && (
+                            <div style={{ position: "absolute", bottom: 0, left: 0, height: "4px", background: "var(--primary)", width: `${att.uploadProgress}%`, transition: "width 0.2s" }} />
+                          )}
                           <Icon name="description" size={18} />
-                          <p style={{ fontSize: "9px", color: "var(--text-color-muted)", marginTop: "2px", maxWidth: "80px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", margin: 0 }}>{att.file.name}</p>
+                          <p style={{ fontSize: "9px", color: "var(--text-color-muted)", marginTop: "2px", maxWidth: "80px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", margin: 0 }}>
+                            {att.uploadProgress !== undefined && att.uploadProgress < 100 ? `${att.uploadProgress}%` : att.file.name}
+                          </p>
                         </div>
                       )}
                       <button onClick={() => removeAttachment(i)}
@@ -593,6 +629,14 @@ const App: React.FC = () => {
                     caretColor: "var(--primary)",
                   }}
                 />
+
+                {localError && (
+                  <div style={{ marginTop: "12px", padding: "12px", background: "rgba(186, 26, 26, 0.1)", borderRadius: "8px", border: "1px solid rgba(186, 26, 26, 0.2)" }}>
+                    <p style={{ margin: 0, fontSize: "14px", color: "#ba1a1a", fontFamily: "'Crimson Pro', serif" }}>
+                      {localError}
+                    </p>
+                  </div>
+                )}
 
                 {/* Toolbar */}
                 <div className="flex items-center justify-between" style={{ marginTop: "28px" }}>
@@ -854,9 +898,14 @@ const App: React.FC = () => {
                       {att.previewUrl ? (
                         <img src={att.previewUrl} alt="" style={{ height: "56px", width: "56px", objectFit: "cover" }} />
                       ) : (
-                        <div style={{ height: "56px", width: "96px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "var(--input-bg)" }}>
+                        <div style={{ height: "56px", width: "96px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "var(--input-bg)", position: "relative" }}>
+                          {att.uploadProgress !== undefined && att.uploadProgress < 100 && (
+                            <div style={{ position: "absolute", bottom: 0, left: 0, height: "4px", background: "var(--primary)", width: `${att.uploadProgress}%`, transition: "width 0.2s" }} />
+                          )}
                           <Icon name="description" size={18} />
-                          <p style={{ fontSize: "9px", color: "var(--text-color-muted)", marginTop: "2px", maxWidth: "80px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", margin: 0 }}>{att.file.name}</p>
+                          <p style={{ fontSize: "9px", color: "var(--text-color-muted)", marginTop: "2px", maxWidth: "80px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", margin: 0 }}>
+                            {att.uploadProgress !== undefined && att.uploadProgress < 100 ? `${att.uploadProgress}%` : att.file.name}
+                          </p>
                         </div>
                       )}
                       <button onClick={() => removeAttachment(i)}
@@ -884,12 +933,20 @@ const App: React.FC = () => {
                 />
                 <div className="flex items-center justify-between" style={{ marginTop: "8px" }}>
                   <button onClick={() => fileInputRef.current?.click()}
-                    className="flex items-center justify-center rounded-full transition-colors"
-                    style={{ width: "38px", height: "38px", border: "1px solid var(--border-color)", color: "var(--text-color-muted)", background: "transparent" }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = "var(--input-bg)")}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                    disabled={isAttaching}
+                    className={`flex items-center justify-center rounded-full transition-colors ${isAttaching ? "animate-pulse" : ""}`}
+                    style={{ width: "38px", height: "38px", border: "1px solid var(--border-color)", color: isAttaching ? "var(--primary)" : "var(--text-color-muted)", background: "transparent" }}
+                    onMouseEnter={(e) => { if(!isAttaching) e.currentTarget.style.background = "var(--input-bg)" }}
+                    onMouseLeave={(e) => { if(!isAttaching) e.currentTarget.style.background = "transparent" }}
                   >
-                    <Icon name="add" size={20} />
+                    {isAttaching ? (
+                      <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                    ) : (
+                      <Icon name="add" size={20} />
+                    )}
                   </button>
                   <div className="flex items-center" style={{ gap: "12px" }}>
                     <div className="relative flex items-center rounded-full" style={{ padding: "6px 16px 6px 12px", background: "var(--bg-color)", border: "1px solid var(--border-color)", gap: "6px" }}>
@@ -929,8 +986,9 @@ const App: React.FC = () => {
         ref={fileInputRef}
         type="file"
         multiple
-        accept="image/png,image/jpeg,image/webp,text/plain,text/csv,.txt,.csv"
+        accept="image/png,image/jpeg,image/webp,text/plain,text/csv,.txt,.csv,audio/*"
         className="hidden"
+        onClick={(e) => { (e.target as HTMLInputElement).value = ''; }}
         onChange={(e) => e.target.files && handleAttach(e.target.files)}
       />
 

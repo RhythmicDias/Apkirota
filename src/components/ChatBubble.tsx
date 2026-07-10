@@ -20,7 +20,8 @@ const Icon = ({ name, style, size = 16 }: { name: string; style?: React.CSSPrope
 const ChatBubble: React.FC<ChatBubbleProps> = ({ message, onEdit, onResend, isLastMessage, hasError }) => {
   const isUser = message.role === "user";
   const text   = message.parts.find((p) => p.text)?.text ?? "";
-  const images = message.parts.filter((p) => p.inlineData);
+  const images = message.parts.filter((p) => p.inlineData && p.inlineData.mimeType.startsWith("image/"));
+  const audios = message.parts.filter((p) => (p.inlineData && p.inlineData.mimeType.startsWith("audio/")) || (p.fileData && p.fileData.mimeType.startsWith("audio/")));
 
   const [copied, setCopied] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -45,11 +46,21 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ message, onEdit, onResend, isLa
         <div style={{ maxWidth: "72%", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "6px" }}>
           {images.map((part, i) => (
             <img
-              key={i}
+              key={`img-${i}`}
               src={`data:${part.inlineData!.mimeType};base64,${part.inlineData!.data}`}
               alt="attachment"
               style={{ maxHeight: "208px", borderRadius: "1rem", border: "1px solid rgba(177, 98, 77, 0.15)", boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)" }}
             />
+          ))}
+          {audios.map((part, i) => (
+            <div key={`aud-${i}`} style={{ display: "flex", flexDirection: "column", alignItems: "center", background: "var(--input-bg)", padding: "12px", borderRadius: "1rem", border: "1px solid rgba(177, 98, 77, 0.15)" }}>
+              <Icon name="audio_file" size={24} style={{ color: "var(--primary)", marginBottom: "8px" }} />
+              {part.inlineData ? (
+                <audio controls src={`data:${part.inlineData.mimeType};base64,${part.inlineData.data}`} style={{ height: "36px", maxWidth: "240px" }} />
+              ) : (
+                <span style={{ fontSize: "12px", color: "var(--text-color-muted)", fontFamily: "'Crimson Pro', serif" }}>Audio File Attached</span>
+              )}
+            </div>
           ))}
           {isEditing ? (
             <div style={{ display: "flex", flexDirection: "column", gap: "8px", width: "100%", minWidth: "300px" }}>

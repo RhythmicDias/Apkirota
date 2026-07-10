@@ -15,6 +15,8 @@ export type ChatRole = "user" | "model";
 export interface ChatPart {
   text?: string;
   inlineData?: { mimeType: string; data: string };
+  fileData?: { mimeType: string; fileUri: string };
+  uploadKeyId?: string;
 }
 
 export interface ChatMessage {
@@ -81,13 +83,15 @@ function buildPayload(
     ];
   }
 
+  const sanitizeParts = (parts: ChatPart[]) => parts.map(({ uploadKeyId, ...rest }) => rest);
+
   return {
     ...(finalSystemPrompt
       ? { systemInstruction: { parts: [{ text: finalSystemPrompt }] } }
       : {}),
     contents: [
-      ...history.map(msg => ({ role: msg.role, parts: msg.parts })),
-      { role: "user", parts: userParts },
+      ...history.map(msg => ({ role: msg.role, parts: sanitizeParts(msg.parts) })),
+      { role: "user", parts: sanitizeParts(userParts) },
     ],
     ...(tools.length > 0 ? { tools } : {}),
     ...(safetySettings ? { safetySettings } : {}),
@@ -107,10 +111,20 @@ export async function sendMessage(
   let lastError: Error | null = null;
 
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-    const entry =
-      opts.mode === "unlimited"
-        ? opts.rotator.getNextKey()
-        : opts.rotator.getActiveKey();
+    const requiredKeyId = opts.userParts.find(p => p.uploadKeyId)?.uploadKeyId 
+                       || opts.history.flatMap(m => m.parts).find(p => p.uploadKeyId)?.uploadKeyId;
+
+    const entry = requiredKeyId 
+      ? opts.rotator.getKeyById(requiredKeyId)
+      : (opts.mode === "unlimited"
+          ? opts.rotator.getNextKey()
+          : opts.rotator.getActiveKey());
+
+    if (requiredKeyId && !entry) {
+      throw new Error(
+        "The API key used to upload files in this conversation is missing or invalid. Please start a new chat."
+      );
+    }
 
     if (!entry) {
       throw new Error(
@@ -147,12 +161,15 @@ export async function sendMessage(
       if (res.status === 429) {
         let errText = "";
         try {
-          const raw = await res.text();
-          try { errText = JSON.parse(raw)?.error?.message || raw; } catch(e) { errText = raw; }
-        } catch (e) { errText = "Unknown API error"; }
-        opts.rotator.reportRateLimit(entry.id);
-        lastError = new Error(`Key "${entry.name}" rate-limited (attempt ${attempt + 1}/${MAX_RETRIES}). Details: ${errText}`);
-        continue; // retry with next key
+          const json = await res.json();
+          if (json.error && json.error.message) errText = json.error.message;
+        } catch (e) {}
+        opts.rotator.reportRateLimit(entry.id, 60_000);
+        lastError = new Error(`Rate limit exceeded for key "${entry.name}". ${errText}`);
+        if (requiredKeyId) {
+          throw new Error(`Rate limit exceeded for key "${entry.name}". This conversation is locked to this key because of file attachments. Please wait before retrying.`);
+        }
+        continue;
       }
 
       if (res.status === 400 || res.status === 401 || res.status === 403) {
@@ -226,4 +243,61 @@ export async function testKey(
   } catch {
     return "invalid";
   }
+}
+
+/** 
+ * Upload a file using Gemini File API (resumable upload) to track progress.
+ * Returns the file URI and MIME type.
+ */
+export function uploadFileToGemini(
+  file: File,
+  apiKey: string,
+  onProgress?: (percent: number) => void
+): Promise<{ fileUri: string; mimeType: string }> {
+  return new Promise((resolve, reject) => {
+    const url = `https://generativelanguage.googleapis.com/upload/v1beta/files?uploadType=multipart&key=${apiKey}`;
+    
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", url, true);
+    
+    const boundary = "------UploadBoundary" + Math.random().toString(36).substring(2);
+    xhr.setRequestHeader("Content-Type", "multipart/related; boundary=" + boundary);
+    
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable && onProgress) {
+        onProgress(Math.round((e.loaded / e.total) * 100));
+      }
+    };
+    
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          const response = JSON.parse(xhr.responseText);
+          resolve({ fileUri: response.file.uri, mimeType: response.file.mimeType });
+        } catch(err) {
+          reject(new Error("Failed to parse upload response"));
+        }
+      } else {
+        let errText = xhr.responseText;
+        try {
+          const json = JSON.parse(xhr.responseText);
+          if (json.error && json.error.message) errText = json.error.message;
+        } catch(e) {}
+        reject(new Error(`Upload failed: ${errText}`));
+      }
+    };
+    
+    xhr.onerror = () => reject(new Error("Upload failed due to network/CORS error."));
+    
+    const metadata = JSON.stringify({ file: { display_name: file.name } });
+    
+    const preBlob = new Blob([
+      `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${metadata}\r\n--${boundary}\r\nContent-Type: ${file.type || "application/octet-stream"}\r\n\r\n`
+    ]);
+    const postBlob = new Blob([`\r\n--${boundary}--\r\n`]);
+    
+    const body = new Blob([preBlob, file, postBlob]);
+    
+    xhr.send(body);
+  });
 }

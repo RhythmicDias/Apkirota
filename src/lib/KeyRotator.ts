@@ -70,6 +70,13 @@ export class KeyRotator {
   }
 
   /**
+   * Return a specific key by its ID.
+   */
+  getKeyById(id: string): ApiKeyEntry | null {
+    return this.keys.find(k => k.id === id) ?? null;
+  }
+
+  /**
    * Mark a key by ID as rate-limited and set a cooldown period.
    */
   reportRateLimit(id: string, cooldownMs = 60_000): void {

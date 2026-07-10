@@ -29,6 +29,7 @@ const InputPanel: React.FC<InputPanelProps> = ({
   const [text, setText] = useState("");
   const [attachments, setAttachments] = useState<AttachedFile[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [isAttaching, setIsAttaching] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -36,6 +37,7 @@ const InputPanel: React.FC<InputPanelProps> = ({
   const setModel = useAppStore((s) => s.setModel);
 
   const handleAttach = useCallback(async (files: FileList | File[]) => {
+    setIsAttaching(true);
     for (const file of Array.from(files)) {
       try {
         const parts = await processFile(file);
@@ -43,8 +45,10 @@ const InputPanel: React.FC<InputPanelProps> = ({
         setAttachments((prev) => [...prev, { file, previewUrl, parts }]);
       } catch (err) {
         console.error("Failed to process file:", err);
+        alert(err instanceof Error ? `Attachment failed: ${err.message}` : "Failed to attach file.");
       }
     }
+    setIsAttaching(false);
   }, []);
 
   const removeAttachment = (index: number) => {
@@ -149,19 +153,27 @@ const InputPanel: React.FC<InputPanelProps> = ({
           <div className="flex items-center gap-2">
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="flex items-center justify-center w-8 h-8 rounded-lg text-[#7DA0CA]/60 hover:text-[#C1E8FF] hover:bg-[#5483B3]/15 transition-all"
+              disabled={isAttaching}
+              className={`flex items-center justify-center w-8 h-8 rounded-lg transition-all ${isAttaching ? "text-[#5483B3] animate-pulse" : "text-[#7DA0CA]/60 hover:text-[#C1E8FF] hover:bg-[#5483B3]/15"}`}
               title="Attach file"
             >
-              <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-              </svg>
+              {isAttaching ? (
+                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              ) : (
+                <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+              )}
             </button>
 
             <input
               ref={fileInputRef}
               type="file"
               multiple
-              accept="image/png,image/jpeg,image/webp,text/plain,text/csv,.txt,.csv"
+              accept="image/png,image/jpeg,image/webp,text/plain,text/csv,.txt,.csv,audio/*"
               className="hidden"
               onChange={(e) => e.target.files && handleAttach(e.target.files)}
             />

@@ -12,23 +12,42 @@ const IMAGE_TYPES: Record<string, string> = {
   "image/gif": "image/gif",
 };
 
+const AUDIO_TYPES: Record<string, string> = {
+  "audio/wav": "audio/wav",
+  "audio/mp3": "audio/mp3",
+  "audio/mpeg": "audio/mpeg",
+  "audio/aac": "audio/aac",
+  "audio/ogg": "audio/ogg",
+  "audio/flac": "audio/flac",
+  "audio/m4a": "audio/mp4",
+  "audio/mp4": "audio/mp4",
+  "audio/x-m4a": "audio/mp4",
+  "audio/webm": "audio/webm",
+};
+
 const TEXT_TYPES = new Set([
   "text/plain",
   "text/csv",
   "text/markdown",
 ]);
 
-/** Convert a File to a base64 inlineData ChatPart for Gemini's multimodal API. */
-export async function imageFileToPart(file: File): Promise<ChatPart> {
+export async function mediaFileToPart(file: File): Promise<ChatPart> {
   return new Promise((resolve, reject) => {
-    if (!IMAGE_TYPES[file.type]) {
-      reject(new Error(`Unsupported image type: ${file.type}`));
+    if (!IMAGE_TYPES[file.type] && !AUDIO_TYPES[file.type] && !file.name.match(/\.(mp3|wav|ogg|flac|aac|m4a|mp4|webm)$/i)) {
+      reject(new Error(`Unsupported media type: ${file.type || file.name}`));
       return;
     }
     const reader = new FileReader();
     reader.onload = () => {
       const base64 = (reader.result as string).split(",")[1];
-      resolve({ inlineData: { mimeType: file.type, data: base64 } });
+      let mime = file.type;
+      if (!mime) {
+        if (file.name.endsWith(".mp3")) mime = "audio/mp3";
+        else if (file.name.endsWith(".wav")) mime = "audio/wav";
+        else if (file.name.endsWith(".m4a")) mime = "audio/mp4";
+        else mime = "application/octet-stream";
+      }
+      resolve({ inlineData: { mimeType: mime, data: base64 } });
     };
     reader.onerror = () => reject(reader.error);
     reader.readAsDataURL(file);
@@ -52,16 +71,15 @@ export async function textFileToPart(file: File): Promise<ChatPart> {
   });
 }
 
-/** Dispatch a File to the appropriate processor and return a ChatPart array. */
 export async function processFile(file: File): Promise<ChatPart[]> {
-  if (IMAGE_TYPES[file.type]) {
-    return [await imageFileToPart(file)];
+  if (IMAGE_TYPES[file.type] || AUDIO_TYPES[file.type] || file.name.match(/\.(mp3|wav|ogg|flac|aac|m4a|mp4|webm)$/i)) {
+    return [await mediaFileToPart(file)];
   }
-  if (TEXT_TYPES.has(file.type) || file.name.endsWith(".txt") || file.name.endsWith(".csv")) {
+  if (TEXT_TYPES.has(file.type) || file.name.match(/\.(txt|csv|md|json|ts|js|jsx|tsx|css|html)$/i)) {
     return [await textFileToPart(file)];
   }
   // Fallback: treat as raw binary → base64 inline data
-  return [await imageFileToPart(file).catch(() => ({ text: `[Unsupported file: ${file.name}]` }))];
+  return [await mediaFileToPart(file).catch((e) => { throw e; })];
 }
 
 /** Thumbnail URL for preview strip (images only). */
