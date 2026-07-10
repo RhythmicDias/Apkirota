@@ -4,7 +4,7 @@
  */
 
 import React from "react";
-import { useAppStore, SUPPORTED_MODELS, selectHealthyKeyCount } from "../store/useAppStore";
+import { useAppStore, SUPPORTED_MODELS, selectHealthyKeyCount, selectActiveSession } from "../store/useAppStore";
 
 const ChatHeader: React.FC = () => {
   const mode = useAppStore((s) => s.mode);
@@ -13,6 +13,9 @@ const ChatHeader: React.FC = () => {
   const setModel = useAppStore((s) => s.setModel);
   const totalKeys = useAppStore((s) => s.apiKeys.length);
   const healthyKeys = useAppStore(selectHealthyKeyCount);
+  const activeSession = useAppStore(selectActiveSession);
+  const skills = useAppStore((s) => s.skills);
+  const activeSkill = activeSession?.skillId ? skills.find(s => s.id === activeSession.skillId) : null;
 
   return (
     <header className="flex items-center justify-between px-6 py-3 border-b border-[#7DA0CA]/8 shrink-0">
@@ -43,6 +46,12 @@ const ChatHeader: React.FC = () => {
         {mode === "unlimited" && (
           <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-[#C1E8FF]/10 text-[#C1E8FF]/80 border border-[#C1E8FF]/20">
             rotating
+          </span>
+        )}
+        {activeSkill && (
+          <span className="ml-2 px-2 py-0.5 rounded-full text-[11px] font-medium bg-[var(--primary)] text-white flex items-center gap-1 shadow-sm">
+            <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>robot_2</span>
+            {activeSkill.name}
           </span>
         )}
       </div>

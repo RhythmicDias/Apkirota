@@ -84,7 +84,7 @@ function buildPayload(
       }
     ]
   });
-  const finalSystemPrompt = modelConfig?.systemInstructions || systemPrompt;
+  const finalSystemPrompt = systemPrompt || modelConfig?.systemInstructions;
   
   const stopSequences = modelConfig?.advanced?.stopSequences
     ? modelConfig.advanced.stopSequences.split(",").map((s) => s.trim()).filter(Boolean)

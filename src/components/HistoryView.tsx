@@ -62,22 +62,23 @@ const HistoryView: React.FC = () => {
               style={{
                 background: "var(--input-bg)",
                 border: "1px solid var(--border-color)",
-                borderRadius: "16px",
-                padding: "16px 20px",
+                borderRadius: "12px",
+                padding: "8px 16px",
               }}
             >
               <div 
-                className="flex-1 cursor-pointer"
+                className="flex-1 cursor-pointer flex items-center"
+                style={{ gap: "16px", overflow: "hidden", paddingRight: "16px" }}
                 onClick={() => {
                   selectSession(session.id);
                   setView("chat");
                 }}
               >
-                <div style={{ fontFamily: "'Crimson Pro', serif", fontSize: "18px", fontWeight: 600, color: "var(--text-color)" }}>
+                <div style={{ fontFamily: "'Crimson Pro', serif", fontSize: "16px", fontWeight: 600, color: "var(--text-color)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", flex: "1" }}>
                   {session.title}
                 </div>
-                <div style={{ fontSize: "13px", color: "var(--text-color-muted)", marginTop: "4px" }}>
-                  {new Date(session.createdAt).toLocaleString()} • {session.messages.length} messages
+                <div style={{ fontSize: "12px", color: "var(--text-color-muted)", whiteSpace: "nowrap" }}>
+                  {new Date(session.createdAt).toLocaleString()} • {session.messages.length} msgs
                 </div>
               </div>
               <button

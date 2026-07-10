@@ -141,6 +141,7 @@ const App: React.FC = () => {
   const updateMessageText = useAppStore((s) => s.updateMessageText);
   const updateMessageMetadata = useAppStore((s) => s.updateMessageMetadata);
   const removeSubsequentMessages = useAppStore((s) => s.removeSubsequentMessages);
+  const skills = useAppStore((s) => s.skills);
 
   const [text, setText]               = useState("");
   const [attachments, setAttachments] = useState<AttachedFile[]>([]);
@@ -300,8 +301,11 @@ const App: React.FC = () => {
       rotator.setCurrentIndex(rotationIndex);
       const history  = (activeSession?.messages ?? []).slice(-20);
       const modelConfig = modelConfigs[selectedModel];
+      const initialStoreSession = useAppStore.getState().sessions.find(s => s.id === currentSessionId);
+      const skill = initialStoreSession?.skillId ? skills.find(s => s.id === initialStoreSession.skillId) : undefined;
+      const systemPrompt = skill?.systemPrompt;
       const startTime = Date.now();
-      const response = await sendMessage({ model: selectedModel, history, userParts, rotator, mode, modelConfig });
+      const response = await sendMessage({ model: selectedModel, history, userParts, rotator, mode, modelConfig, systemPrompt });
       const latencyMs = Date.now() - startTime;
       setRotationIndex(rotator.getCurrentIndex());
       const storeSession = useAppStore.getState().sessions.find(s => s.id === currentSessionId);
@@ -745,7 +749,7 @@ const App: React.FC = () => {
                     className="illustrative-icon"
                     style={{ transition: "transform 0.2s" } as React.CSSProperties}
                   />
-                  <span style={{ fontFamily: "'Crimson Pro', serif", fontSize: "16px", fontWeight: 500, letterSpacing: "0.01em", color: "#433e3a" }}>
+                  <span style={{ fontFamily: "'Crimson Pro', serif", fontSize: "16px", fontWeight: 500, letterSpacing: "0.01em", color: "var(--text-color)" }}>
                     {chip.label}
                   </span>
                 </button>
@@ -782,8 +786,10 @@ const App: React.FC = () => {
                       const rotator  = new KeyRotator(apiKeys);
                       rotator.setCurrentIndex(rotationIndex);
                       const modelConfig = modelConfigs[selectedModel];
+                      const skill = updatedSession?.skillId ? skills.find(s => s.id === updatedSession.skillId) : undefined;
+                      const systemPrompt = skill?.systemPrompt;
                       const startTime = Date.now();
-                      const response = await sendMessage({ model: selectedModel, history, userParts, rotator, mode, modelConfig });
+                      const response = await sendMessage({ model: selectedModel, history, userParts, rotator, mode, modelConfig, systemPrompt });
                       const latencyMs = Date.now() - startTime;
                       setRotationIndex(rotator.getCurrentIndex());
                       updateMessageMetadata(activeSessionId, i, { 
@@ -831,8 +837,10 @@ const App: React.FC = () => {
                       const rotator  = new KeyRotator(apiKeys);
                       rotator.setCurrentIndex(rotationIndex);
                       const modelConfig = modelConfigs[selectedModel];
+                      const skill = updatedSession?.skillId ? skills.find(s => s.id === updatedSession.skillId) : undefined;
+                      const systemPrompt = skill?.systemPrompt;
                       const startTime = Date.now();
-                      const response = await sendMessage({ model: selectedModel, history, userParts, rotator, mode, modelConfig });
+                      const response = await sendMessage({ model: selectedModel, history, userParts, rotator, mode, modelConfig, systemPrompt });
                       const latencyMs = Date.now() - startTime;
                       setRotationIndex(rotator.getCurrentIndex());
                       updateMessageMetadata(activeSessionId, i, { 

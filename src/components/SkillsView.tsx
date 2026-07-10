@@ -11,6 +11,8 @@ const SkillsView: React.FC = () => {
   const updateSkill = useAppStore((s) => s.updateSkill);
   const deleteSkill = useAppStore((s) => s.deleteSkill);
   const setView = useAppStore((s) => s.setView);
+  const createSession = useAppStore((s) => s.createSession);
+  const selectSession = useAppStore((s) => s.selectSession);
 
   const [newName, setNewName] = useState("");
   const [newPrompt, setNewPrompt] = useState("");
@@ -18,6 +20,12 @@ const SkillsView: React.FC = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editPrompt, setEditPrompt] = useState("");
+  
+  const [expandedIds, setExpandedIds] = useState<string[]>([]);
+
+  const toggleCollapse = (id: string) => {
+    setExpandedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  };
 
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,6 +45,12 @@ const SkillsView: React.FC = () => {
     if (!editName.trim() || !editPrompt.trim()) return;
     updateSkill(id, editName.trim(), editPrompt.trim());
     setEditingId(null);
+  };
+
+  const handleChatWithSkill = (skillId: string) => {
+    const sessionId = createSession(skillId);
+    selectSession(sessionId);
+    setView("chat");
   };
 
   return (
@@ -111,13 +125,19 @@ const SkillsView: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div style={{ fontFamily: "'Crimson Pro', serif", fontSize: "20px", fontWeight: 600 }}>{skill.name}</div>
                   <div className="flex items-center" style={{ gap: "8px" }}>
+                    <button onClick={() => handleChatWithSkill(skill.id)} style={{ padding: "4px 12px", background: "var(--primary)", color: "white", borderRadius: "6px", fontSize: "14px", fontWeight: 600, display: "flex", alignItems: "center", gap: "6px" }}><Icon name="chat" size={16} /> Chat</button>
                     <button onClick={() => startEdit(skill)} style={{ color: "var(--text-color-muted)" }}><Icon name="edit" size={18} /></button>
                     <button onClick={() => deleteSkill(skill.id)} style={{ color: "#ba1a1a" }}><Icon name="delete" size={18} /></button>
+                    <button onClick={() => toggleCollapse(skill.id)} style={{ color: "var(--text-color-muted)", marginLeft: "4px" }} title={expandedIds.includes(skill.id) ? "Collapse" : "Expand"}>
+                      <Icon name={expandedIds.includes(skill.id) ? "expand_less" : "expand_more"} size={22} />
+                    </button>
                   </div>
                 </div>
-                <div style={{ fontSize: "14px", color: "var(--text-color-muted)", whiteSpace: "pre-wrap", background: "var(--bg-color)", padding: "12px", borderRadius: "8px" }}>
-                  {skill.systemPrompt}
-                </div>
+                {expandedIds.includes(skill.id) && (
+                  <div style={{ fontSize: "14px", color: "var(--text-color-muted)", whiteSpace: "pre-wrap", background: "var(--bg-color)", padding: "12px", borderRadius: "8px" }}>
+                    {skill.systemPrompt}
+                  </div>
+                )}
               </>
             )}
           </div>

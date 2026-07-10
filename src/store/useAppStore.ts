@@ -77,6 +77,7 @@ export interface ChatSession {
   createdAt: number;
   updatedAt: number;
   messages: ChatMessage[];
+  skillId?: string;
 }
 
 export interface Skill {
@@ -122,7 +123,7 @@ interface AppState {
   // Sessions
   sessions: ChatSession[];
   activeSessionId: string | null;
-  createSession: () => string;
+  createSession: (skillId?: string) => string;
   deleteSession: (id: string) => void;
   selectSession: (id: string) => void;
   appendMessage: (sessionId: string, message: ChatMessage) => void;
@@ -223,7 +224,7 @@ export const useAppStore = create<AppState>()(
       sessions: [],
       activeSessionId: null,
 
-      createSession: () => {
+      createSession: (skillId?: string) => {
         const id = uuidv4();
         const session: ChatSession = {
           id,
@@ -231,6 +232,7 @@ export const useAppStore = create<AppState>()(
           createdAt: Date.now(),
           updatedAt: Date.now(),
           messages: [],
+          ...(skillId ? { skillId } : {})
         };
         set((s) => ({
           sessions: [session, ...s.sessions],
