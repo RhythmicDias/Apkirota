@@ -1,5 +1,7 @@
 # Apkirota 🌌
 
+<img src="app-icon.svg" width="120" align="right" alt="Apkirota Icon" />
+
 **Unlimited Gemini API desktop client powered by secure, local sequential key rotation.**
 
 > A premium local-first LLM workspace built with Tauri + React, designed to maximize the utility of free Gemini API keys through intelligent round-robin rotation.
