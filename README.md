@@ -1,4 +1,4 @@
-# Apkirota 🌌
+# Apkirota
 
 <img src="app-icon.svg" width="120" align="right" alt="Apkirota Icon" />
 
