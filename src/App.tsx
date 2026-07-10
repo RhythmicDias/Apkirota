@@ -14,6 +14,7 @@ import ChatBubble from "./components/ChatBubble";
 import SettingsView from "./components/SettingsView";
 import HistoryView from "./components/HistoryView";
 import SkillsView from "./components/SkillsView";
+import TitleBar from "./components/TitleBar";
 import { invoke } from "@tauri-apps/api/core";
 import { useAppStore, selectActiveSession, SUPPORTED_MODELS } from "./store/useAppStore";
 import { KeyRotator } from "./lib/KeyRotator";
@@ -381,6 +382,7 @@ const App: React.FC = () => {
       onDragLeave={() => setIsDragOver(false)}
       onDrop={(e) => { e.preventDefault(); setIsDragOver(false); if (e.dataTransfer.files.length) handleAttach(e.dataTransfer.files); }}
     >
+      <TitleBar />
 
       {/* ════════════════════════════════════════════════
           HEADER — logo + mode toggle only (no fake window controls)
