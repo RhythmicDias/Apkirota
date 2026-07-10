@@ -139,7 +139,7 @@ const App: React.FC = () => {
   const setRotationIndex = useAppStore((s) => s.setRotationIndex);
   const clearSessionMessages = useAppStore((s) => s.clearSessionMessages);
   const updateMessageText = useAppStore((s) => s.updateMessageText);
-  const updateMessageUsage = useAppStore((s) => s.updateMessageUsage);
+  const updateMessageMetadata = useAppStore((s) => s.updateMessageMetadata);
   const removeSubsequentMessages = useAppStore((s) => s.removeSubsequentMessages);
 
   const [text, setText]               = useState("");
@@ -306,12 +306,18 @@ const App: React.FC = () => {
       setRotationIndex(rotator.getCurrentIndex());
       const storeSession = useAppStore.getState().sessions.find(s => s.id === currentSessionId);
       const userMsgIndex = storeSession ? storeSession.messages.length - 1 : -1;
-      if (response.usage && userMsgIndex >= 0) {
-        updateMessageUsage(currentSessionId, userMsgIndex, { promptTokens: response.usage.promptTokens });
+      if (userMsgIndex >= 0) {
+        updateMessageMetadata(currentSessionId, userMsgIndex, { 
+          modelName: selectedModel,
+          apiKeyName: response.usedKeyName,
+          ...(response.usage ? { usage: { promptTokens: response.usage.promptTokens } } : {})
+        });
       }
       appendMessage(currentSessionId, { 
         role: "model", 
         parts: [{ text: response.text }],
+        modelName: selectedModel,
+        apiKeyName: response.usedKeyName,
         usage: { completionTokens: response.usage?.completionTokens, totalTokens: response.usage?.totalTokens, latencyMs }
       });
       if (response.usage) {

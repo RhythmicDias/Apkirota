@@ -122,7 +122,7 @@ interface AppState {
   clearAllSessions: () => void;
   clearSessionMessages: (id: string) => void;
   updateMessageText: (sessionId: string, messageIndex: number, text: string) => void;
-  updateMessageUsage: (sessionId: string, messageIndex: number, usage: any) => void;
+  updateMessageMetadata: (sessionId: string, messageIndex: number, metadata: Partial<ChatMessage>) => void;
   removeSubsequentMessages: (sessionId: string, fromIndex: number) => void;
 
   // Skills
@@ -301,7 +301,7 @@ export const useAppStore = create<AppState>()(
           ),
         })),
 
-      updateMessageUsage: (sessionId, messageIndex, usage) =>
+      updateMessageMetadata: (sessionId, messageIndex, metadata) =>
         set((s) => ({
           sessions: s.sessions.map((sess) =>
             sess.id === sessionId
@@ -309,7 +309,11 @@ export const useAppStore = create<AppState>()(
                   ...sess,
                   messages: sess.messages.map((msg, idx) =>
                     idx === messageIndex
-                      ? { ...msg, usage: { ...msg.usage, ...usage } }
+                      ? { 
+                          ...msg, 
+                          ...metadata,
+                          usage: { ...msg.usage, ...metadata.usage }
+                        }
                       : msg
                   ),
                   updatedAt: Date.now(),

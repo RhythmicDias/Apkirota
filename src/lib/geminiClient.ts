@@ -22,6 +22,8 @@ export interface ChatPart {
 export interface ChatMessage {
   role: ChatRole;
   parts: ChatPart[];
+  modelName?: string;
+  apiKeyName?: string;
   usage?: {
     promptTokens?: number;
     completionTokens?: number;

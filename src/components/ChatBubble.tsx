@@ -114,11 +114,10 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ message, onEdit, onResend, isLa
               )}
               {/* Actions row */}
               <div style={{ display: "flex", gap: "12px", opacity: 0.5, transition: "opacity 0.2s", width: "100%", alignItems: "center" }} onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")} onMouseLeave={(e) => (e.currentTarget.style.opacity = "0.5")}>
-                {message.usage?.promptTokens !== undefined && (
-                  <span style={{ fontSize: "11px", fontFamily: "'JetBrains Mono', monospace", color: "var(--text-color-muted)", marginRight: "auto" }}>
-                    Input Tokens: {message.usage.promptTokens}
-                  </span>
-                )}
+                <span style={{ fontSize: "11px", fontFamily: "'JetBrains Mono', monospace", color: "var(--text-color-muted)", marginRight: "auto" }}>
+                  {message.modelName && message.apiKeyName && `${message.modelName} via ${message.apiKeyName} | `}
+                  {message.usage?.promptTokens !== undefined && `Input Tokens: ${message.usage.promptTokens}`}
+                </span>
                 <button onClick={handleCopy} title="Copy" style={{ background: "transparent", border: "none", cursor: "pointer", color: "var(--text-color-muted)" }}>
                   <Icon name={copied ? "check" : "content_copy"} size={16} />
                 </button>
@@ -257,12 +256,11 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ message, onEdit, onResend, isLa
 
         {/* Actions row */}
         <div style={{ display: "flex", gap: "12px", opacity: 0.5, transition: "opacity 0.2s", marginTop: "2px", alignItems: "center" }} onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")} onMouseLeave={(e) => (e.currentTarget.style.opacity = "0.5")}>
-          {message.usage?.completionTokens !== undefined && (
-            <span style={{ fontSize: "11px", fontFamily: "'JetBrains Mono', monospace", color: "var(--text-color-muted)", marginRight: "auto" }}>
-              Output: {message.usage.completionTokens} | Total: {message.usage.totalTokens}
-              {message.usage.latencyMs !== undefined && ` | Time: ${(message.usage.latencyMs / 1000).toFixed(1)}s`}
-            </span>
-          )}
+          <span style={{ fontSize: "11px", fontFamily: "'JetBrains Mono', monospace", color: "var(--text-color-muted)", marginRight: "auto" }}>
+            {message.modelName && message.apiKeyName && `${message.modelName} via ${message.apiKeyName} | `}
+            {message.usage?.completionTokens !== undefined && `Output: ${message.usage.completionTokens} | Total: ${message.usage.totalTokens}`}
+            {message.usage?.latencyMs !== undefined && ` | Time: ${(message.usage.latencyMs / 1000).toFixed(1)}s`}
+          </span>
           <button onClick={handleCopy} title="Copy" style={{ background: "transparent", border: "none", cursor: "pointer", color: "var(--text-color-muted)" }}>
             <Icon name={copied ? "check" : "content_copy"} size={16} />
           </button>
