@@ -144,6 +144,8 @@ const App: React.FC = () => {
   const removeSubsequentMessages = useAppStore((s) => s.removeSubsequentMessages);
   const skills = useAppStore((s) => s.skills);
 
+  const activeSkill = activeSession?.skillId ? skills.find(s => s.id === activeSession.skillId) : null;
+
   const [text, setText]               = useState("");
   const [attachments, setAttachments] = useState<AttachedFile[]>([]);
   const [isDragOver, setIsDragOver]   = useState(false);
@@ -573,7 +575,7 @@ const App: React.FC = () => {
                 lineHeight: 1.1,
                 letterSpacing: "-0.04em",
                 color: "#433e3a",
-                marginBottom: "40px",
+                marginBottom: activeSkill ? "16px" : "40px",
               }}
             >
               Hello,{" "}
@@ -581,6 +583,18 @@ const App: React.FC = () => {
                 {getTimeBasedGreeting()}
               </span>
             </h1>
+
+            {activeSkill && (
+              <div className="fade-in-delay-1 flex items-center justify-center gap-2" style={{ marginBottom: "40px" }}>
+                <span 
+                  className="rounded-full text-[15px] font-medium bg-[var(--primary)] text-white inline-flex items-center gap-2 shadow-sm whitespace-nowrap"
+                  style={{ padding: "8px 32px" }}
+                >
+                  <Icon name="robot_2" size={18} />
+                  Chatting with {activeSkill.name}
+                </span>
+              </div>
+            )}
 
             {/* ── Input card ── */}
             <div
@@ -695,7 +709,13 @@ const App: React.FC = () => {
                         }}
                       >
                         {SUPPORTED_MODELS.map((m) => (
-                          <option key={m} value={m}>{modelLabel(m)}</option>
+                          <option 
+                            key={m} 
+                            value={m}
+                            style={{ background: "var(--bg-color)", color: "var(--text-color)" }}
+                          >
+                            {modelLabel(m)}
+                          </option>
                         ))}
                       </select>
                       <Icon name="expand_more" size={16} style={{ color: "var(--text-color-muted)" } as React.CSSProperties} />

@@ -49,9 +49,9 @@ const ChatHeader: React.FC = () => {
           </span>
         )}
         {activeSkill && (
-          <span className="ml-2 px-2 py-0.5 rounded-full text-[11px] font-medium bg-[var(--primary)] text-white flex items-center gap-1 shadow-sm">
-            <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>robot_2</span>
-            {activeSkill.name}
+          <span className="ml-3 px-4 py-1 rounded-full text-[12px] font-medium bg-[var(--primary)] text-white flex items-center gap-1.5 shadow-sm">
+            <span className="material-symbols-outlined" style={{ fontSize: "15px" }}>robot_2</span>
+            Chatting with {activeSkill.name}
           </span>
         )}
       </div>
