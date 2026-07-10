@@ -79,8 +79,18 @@ const InputPanel: React.FC<InputPanelProps> = ({
   };
 
   const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
-    if (e.clipboardData && e.clipboardData.files && e.clipboardData.files.length > 0) {
-      handleAttach(e.clipboardData.files);
+    if (e.clipboardData && e.clipboardData.items) {
+      const items = e.clipboardData.items;
+      const files: File[] = [];
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].kind === "file") {
+          const file = items[i].getAsFile();
+          if (file) files.push(file);
+        }
+      }
+      if (files.length > 0) {
+        handleAttach(files);
+      }
     }
   };
 
