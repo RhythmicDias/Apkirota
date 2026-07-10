@@ -78,6 +78,12 @@ const InputPanel: React.FC<InputPanelProps> = ({
     if (ta) { ta.style.height = "auto"; ta.style.height = Math.min(ta.scrollHeight, 180) + "px"; }
   };
 
+  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    if (e.clipboardData && e.clipboardData.files && e.clipboardData.files.length > 0) {
+      handleAttach(e.clipboardData.files);
+    }
+  };
+
   const onDragOver = (e: React.DragEvent) => { e.preventDefault(); setIsDragOver(true); };
   const onDragLeave = () => setIsDragOver(false);
   const onDrop = (e: React.DragEvent) => {
@@ -132,6 +138,7 @@ const InputPanel: React.FC<InputPanelProps> = ({
             value={text}
             onChange={handleTextChange}
             onKeyDown={handleKeyDown}
+            onPaste={handlePaste}
             disabled={disabled}
             placeholder={
               isWelcome
