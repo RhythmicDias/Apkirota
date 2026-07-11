@@ -396,19 +396,43 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: "apkirota-storage",
-      partialize: (state) => ({
-        apiKeys: state.apiKeys,
-        mode: state.mode,
-        selectedModel: state.selectedModel,
-        sessions: state.sessions,
-        activeSessionId: state.activeSessionId,
-        skills: state.skills,
-        historyEnabled: state.historyEnabled,
-        theme: state.theme,
-        usageRecords: state.usageRecords,
-        rotationIndex: state.rotationIndex,
-        modelConfigs: state.modelConfigs,
-      }),
+      partialize: (state) => {
+        // Strip Base64 inlineData from messages before persisting to disk.
+        // This prevents large files (images, audio) from leaking as plaintext.
+        const sanitizeSessions = (sessions: ChatSession[]): ChatSession[] =>
+          sessions.map((session) => ({
+            ...session,
+            messages: session.messages.map((msg) => ({
+              ...msg,
+              parts: msg.parts.map((part) => {
+                if (part.inlineData?.data) {
+                  return {
+                    ...part,
+                    inlineData: {
+                      mimeType: part.inlineData.mimeType,
+                      data: "[stripped]", // placeholder — actual data is in-memory only
+                    },
+                  };
+                }
+                return part;
+              }),
+            })),
+          }));
+
+        return {
+          apiKeys: state.apiKeys,
+          mode: state.mode,
+          selectedModel: state.selectedModel,
+          sessions: state.historyEnabled ? sanitizeSessions(state.sessions) : [],
+          activeSessionId: state.historyEnabled ? state.activeSessionId : null,
+          skills: state.skills,
+          historyEnabled: state.historyEnabled,
+          theme: state.theme,
+          usageRecords: state.usageRecords,
+          rotationIndex: state.rotationIndex,
+          modelConfigs: state.modelConfigs,
+        };
+      },
     }
   )
 );

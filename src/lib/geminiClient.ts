@@ -165,13 +165,13 @@ export async function sendMessage(
       continue;
     }
 
-    const url = `${GEMINI_BASE}/${opts.model}:generateContent?key=${rawKeyValue}`;
+    const url = `${GEMINI_BASE}/${opts.model}:generateContent`;
     const body = buildPayload(opts.history, opts.userParts, opts.systemPrompt, opts.modelConfig);
 
     try {
       const res = await fetch(url, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "x-goog-api-key": rawKeyValue },
         body: JSON.stringify(body),
       });
 
@@ -234,7 +234,16 @@ export async function sendMessage(
 
             const filePath = await save({
               filters: [{ name: "Word Document", extensions: ["docx"] }],
-              defaultPath: call.args.filename || "document.docx"
+              defaultPath: (() => {
+                // Sanitize AI-controlled filename: strip path separators and traversal
+                let name = (call.args.filename || "document.docx")
+                  .replace(/[/\\]/g, "_")       // strip path separators
+                  .replace(/\.\./g, "_")          // strip directory traversal
+                  .replace(/[<>:"|?*]/g, "_")    // strip Windows-illegal chars
+                  .trim();
+                if (!name.toLowerCase().endsWith(".docx")) name += ".docx";
+                return name;
+              })()
             });
 
             if (filePath) {
@@ -279,11 +288,11 @@ export async function testKey(
   apiKey: string,
   model = "gemini-2.5-flash"
 ): Promise<"valid" | "invalid" | "rate-limited"> {
-  const url = `${GEMINI_BASE}/${model}:generateContent?key=${apiKey}`;
+  const url = `${GEMINI_BASE}/${model}:generateContent`;
   try {
     const res = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
       body: JSON.stringify({
         contents: [{ role: "user", parts: [{ text: "Hi" }] }],
         generationConfig: { maxOutputTokens: 5 },
@@ -309,13 +318,14 @@ export function uploadFileToGemini(
   onProgress?: (percent: number) => void
 ): Promise<{ fileUri: string; mimeType: string }> {
   return new Promise((resolve, reject) => {
-    const url = `https://generativelanguage.googleapis.com/upload/v1beta/files?uploadType=multipart&key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/upload/v1beta/files?uploadType=multipart`;
     
     const xhr = new XMLHttpRequest();
     xhr.open("POST", url, true);
     
     const boundary = "------UploadBoundary" + Math.random().toString(36).substring(2);
     xhr.setRequestHeader("Content-Type", "multipart/related; boundary=" + boundary);
+    xhr.setRequestHeader("x-goog-api-key", apiKey);
     
     xhr.upload.onprogress = (e) => {
       if (e.lengthComputable && onProgress) {

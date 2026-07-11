@@ -148,13 +148,23 @@ const SettingsView: React.FC = () => {
   };
 
   const handleExportJSON = () => {
-    const blob = new Blob([JSON.stringify(sessions, null, 2)], { type: "application/json" });
+    if (!confirm("Export will include all chat messages and metadata. The exported file may contain sensitive conversation content.\n\nProceed with export?")) return;
+    // Strip Base64 data from exported sessions to prevent large data leaks
+    const sanitized = sessions.map(s => ({
+      ...s,
+      messages: s.messages.map(m => ({
+        ...m,
+        parts: m.parts.map(p => p.inlineData?.data ? { ...p, inlineData: { mimeType: p.inlineData.mimeType, data: "[stripped]" } } : p)
+      }))
+    }));
+    const blob = new Blob([JSON.stringify(sanitized, null, 2)], { type: "application/json" });
     const url  = URL.createObjectURL(blob);
     const a    = Object.assign(document.createElement("a"), { href: url, download: `apkirota-history-${Date.now()}.json` });
     a.click(); URL.revokeObjectURL(url);
   };
 
   const handleExportMd = () => {
+    if (!confirm("Export will include all chat messages. The exported file may contain sensitive conversation content.\n\nProceed with export?")) return;
     let md = "# Apkirota Chat Export\n\n";
     for (const s of sessions) {
       md += `## ${s.title}\n\n`;
