@@ -13,7 +13,7 @@
 - **Sequential API Key Rotation** — Pool up to 20+ free-tier Gemini keys and rotate them automatically, so you effectively never hit a rate limit
 - **Dual-Mode Operation** — Toggle between **Normal** (single active key) and **Unlimited** (full round-robin rotation) with an animated glowing switch
 - **Secure OS Keyring Integration** — API keys are stored securely using your operating system's native credential manager, rather than in plaintext
-- **Deep Space Dark Theme** — Premium UI with a custom navy & ice-blue palette, glassmorphism panels, and smooth micro-animations
+- **Warm Charcoal Gray Theme** — Premium UI with a custom warm gray & terracotta palette, glassmorphism panels, and smooth micro-animations
 - **Multi-Format Upload Handler** — Drag-and-drop support for PDFs, images (PNG, JPEG, WEBP), plain text, and CSV files with full multimodal Gemini processing
 - **Custom AI Skills** — Create and manage distinct personas with custom system prompts for specialized tasks (e.g., Code Review, Writing Assistance)
 - **Advanced Model Configuration** — Fine-tune the AI's behavior with adjustable thinking levels (Low, Medium, High), output lengths, safety settings, and grounding tools
@@ -80,11 +80,11 @@ User sends message M4 → Key A (index 0) → wraps back to 0
 
 | Token | Hex | Role |
 |---|---|---|
-| Deep Space Navy | `#021024` | App background |
-| Abyssal Blue | `#052659` | Sidebar, cards |
-| Steel Blue Accent | `#5483B3` | Buttons, toggles |
-| Ice-Faded Blue | `#7DA0CA` | Secondary labels |
-| Glacial Ice White | `#C1E8FF` | Headings, user bubbles |
+| Charcoal Gray | `#35302c` | App background (Dark) |
+| Terracotta Accent | `#b1624d` | Primary buttons, toggles, accents |
+| Warm Taupe | `#8c7d6e` | Secondary UI elements |
+| Muted Gray | `#d5cdc5` | Secondary text |
+| Off-White | `#f8f5f1` | Primary text, App background (Light) |
 
 ---
 
