@@ -19,7 +19,7 @@ const Icon = ({ name, style, size = 16 }: { name: string; style?: React.CSSPrope
 
 const ChatBubble: React.FC<ChatBubbleProps> = ({ message, onEdit, onResend, isLastMessage, hasError }) => {
   const isUser = message.role === "user";
-  const text   = message.parts.find((p) => p.text)?.text ?? "";
+  const text   = message.parts.map((p) => p.text).filter(Boolean).join("") || "";
   const images = message.parts.filter((p) => p.inlineData && p.inlineData.mimeType.startsWith("image/"));
   const audios = message.parts.filter((p) => (p.inlineData && p.inlineData.mimeType.startsWith("audio/")) || (p.fileData && p.fileData.mimeType.startsWith("audio/")));
   const docs   = message.parts.filter((p) => p.fileData && !p.fileData.mimeType.startsWith("audio/") && !p.fileData.mimeType.startsWith("image/") && !p.fileData.mimeType.startsWith("video/"));

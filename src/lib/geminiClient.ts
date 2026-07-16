@@ -211,7 +211,7 @@ export async function sendMessage(
 
       const json = await res.json();
       const parts = json?.candidates?.[0]?.content?.parts ?? [];
-      let text: string = parts.find((p: any) => p.text)?.text ?? "";
+      let text: string = parts.map((p: any) => p.text).filter(Boolean).join("") || "";
 
       const functionCallPart = parts.find((p: any) => p.functionCall);
       if (functionCallPart) {
@@ -256,7 +256,15 @@ export async function sendMessage(
             console.error(e);
             text += `\n\n❌ **Error:** Failed to generate document. ${e?.message || String(e)}`;
           }
+        } else {
+          // If it's a different function call, just show it
+          text += `\n\n*[Called tool: ${call.name}]*`;
         }
+      }
+
+      // Fallback: If text is STILL empty (e.g., returned executableCode or something else), show the raw parts so we can debug.
+      if (!text.trim() && parts.length > 0) {
+        text = `*[No text was generated. Raw API parts output:]*\n\n\`\`\`json\n${JSON.stringify(parts, null, 2)}\n\`\`\``;
       }
 
       const promptTokens = json?.usageMetadata?.promptTokenCount ?? 0;

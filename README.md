@@ -8,19 +8,24 @@
 
 ---
 
-## ✨ Key Features
+## Key Features
 
-- 🔄 **Sequential API Key Rotation** — Pool up to 20+ free-tier Gemini keys and rotate them automatically, so you effectively never hit a rate limit
-- 🎛️ **Dual-Mode Operation** — Toggle between **Normal** (single active key) and **Unlimited** (full round-robin rotation) with an animated glowing switch
-- 🌌 **Deep Space Dark Theme** — Premium UI with a custom navy & ice-blue palette, glassmorphism panels, and smooth micro-animations
-- 📂 **Multi-Format Upload Handler** — Drag-and-drop images (PNG, JPEG, WEBP), plain text, and CSV files into the chat with full multimodal Gemini support
-- 🔒 **Local-First Privacy** — API keys and chat history live exclusively on your device; nothing is ever sent to a third-party server
-- 💬 **Markdown & Code Highlighting** — Full GFM Markdown rendering with Prism syntax highlighting for code blocks
-- 📤 **Export Chat History** — Save your sessions as JSON or Markdown at any time
+- **Sequential API Key Rotation** — Pool up to 20+ free-tier Gemini keys and rotate them automatically, so you effectively never hit a rate limit
+- **Dual-Mode Operation** — Toggle between **Normal** (single active key) and **Unlimited** (full round-robin rotation) with an animated glowing switch
+- **Secure OS Keyring Integration** — API keys are stored securely using your operating system's native credential manager, rather than in plaintext
+- **Deep Space Dark Theme** — Premium UI with a custom navy & ice-blue palette, glassmorphism panels, and smooth micro-animations
+- **Multi-Format Upload Handler** — Drag-and-drop support for PDFs, images (PNG, JPEG, WEBP), plain text, and CSV files with full multimodal Gemini processing
+- **Custom AI Skills** — Create and manage distinct personas with custom system prompts for specialized tasks (e.g., Code Review, Writing Assistance)
+- **Advanced Model Configuration** — Fine-tune the AI's behavior with adjustable thinking levels (Low, Medium, High), output lengths, safety settings, and grounding tools
+- **Detailed Usage Statistics** — Track your API token consumption with comprehensive metrics broken down by day, by model, and by individual API key
+- **Session Management** — Organize your workflows into multiple concurrent chat sessions with auto-generated titles and local persistence
+- **Local-First Privacy** — API keys and chat history live exclusively on your device; nothing is ever sent to a third-party server
+- **Markdown & Code Highlighting** — Full GFM Markdown rendering with Prism syntax highlighting for code blocks
+- **Export Chat History** — Save your sessions as JSON or Markdown at any time
 
 ---
 
-## 🚀 Installation & Local Development
+## Installation & Local Development
 
 ### Prerequisites
 - [Node.js](https://nodejs.org/) v18+
@@ -43,7 +48,7 @@ npm run tauri dev
 
 ---
 
-## ⚙️ How It Works — Routing & Rotation
+## How It Works — Routing & Rotation
 
 Apkirota uses a sophisticated rotation engine to distribute your API requests based on your selected mode:
 
@@ -71,7 +76,7 @@ User sends message M4 → Key A (index 0) → wraps back to 0
 
 ---
 
-## 🎨 Color Palette
+## Color Palette
 
 | Token | Hex | Role |
 |---|---|---|
@@ -83,7 +88,7 @@ User sends message M4 → Key A (index 0) → wraps back to 0
 
 ---
 
-## 🏗️ Project Structure
+## Project Structure
 
 ```
 Apkirota/
@@ -101,6 +106,6 @@ Apkirota/
 
 ---
 
-## 📄 License
+## License
 
 MIT © [RhythmicDias](https://github.com/RhythmicDias)

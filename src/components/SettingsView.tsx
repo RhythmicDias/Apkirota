@@ -651,6 +651,16 @@ const SettingsView: React.FC = () => {
             return acc;
           }, {} as Record<string, { prompt: number; completion: number; total: number }>);
 
+          const dayStats = usageRecords.reduce((acc, r) => {
+            const dateObj = new Date(r.timestamp);
+            const dayLabel = dateObj.toLocaleDateString();
+            if (!acc[dayLabel]) acc[dayLabel] = { prompt: 0, completion: 0, total: 0 };
+            acc[dayLabel].prompt += r.promptTokens;
+            acc[dayLabel].completion += r.completionTokens;
+            acc[dayLabel].total += r.totalTokens;
+            return acc;
+          }, {} as Record<string, { prompt: number; completion: number; total: number }>);
+
           return (
             <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
               {/* Summary Cards */}
@@ -691,6 +701,37 @@ const SettingsView: React.FC = () => {
                       {Object.entries(modelStats).map(([model, s]) => (
                         <tr key={model} style={{ borderBottom: "1px solid rgba(213,205,197,0.15)" }}>
                           <td style={{ padding: "12px 8px", fontWeight: 600, color: "var(--text-color)" }}>{model}</td>
+                          <td style={{ padding: "12px 8px", color: "var(--text-color-muted)", textAlign: "right" }}>{s.prompt.toLocaleString()}</td>
+                          <td style={{ padding: "12px 8px", color: "var(--text-color-muted)", textAlign: "right" }}>{s.completion.toLocaleString()}</td>
+                          <td style={{ padding: "12px 8px", color: "var(--primary)", fontWeight: 700, textAlign: "right" }}>{s.total.toLocaleString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+
+              {/* Day Breakdown */}
+              <div className="input-card" style={{ padding: "24px", borderRadius: "2rem" }}>
+                <h3 style={{ fontSize: "18px", fontWeight: 700, color: "var(--text-color)", margin: "0 0 16px 0" }}>Usage by Day</h3>
+                {Object.keys(dayStats).length === 0 ? (
+                  <p style={{ fontStyle: "italic", color: "var(--text-color-muted)", margin: 0 }}>No daily usage recorded yet.</p>
+                ) : (
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px" }}>
+                    <thead>
+                      <tr style={{ borderBottom: "1px solid var(--border-color)", textAlign: "left" }}>
+                        <th style={{ padding: "10px 8px", color: "var(--text-color-muted)" }}>Date</th>
+                        <th style={{ padding: "10px 8px", color: "var(--text-color-muted)", textAlign: "right" }}>Prompt</th>
+                        <th style={{ padding: "10px 8px", color: "var(--text-color-muted)", textAlign: "right" }}>Completion</th>
+                        <th style={{ padding: "10px 8px", color: "var(--text-color-muted)", textAlign: "right" }}>Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Object.entries(dayStats)
+                        .sort((a, b) => new Date(b[0]).getTime() - new Date(a[0]).getTime())
+                        .map(([day, s]) => (
+                        <tr key={day} style={{ borderBottom: "1px solid rgba(213,205,197,0.15)" }}>
+                          <td style={{ padding: "12px 8px", fontWeight: 600, color: "var(--text-color)" }}>{day}</td>
                           <td style={{ padding: "12px 8px", color: "var(--text-color-muted)", textAlign: "right" }}>{s.prompt.toLocaleString()}</td>
                           <td style={{ padding: "12px 8px", color: "var(--text-color-muted)", textAlign: "right" }}>{s.completion.toLocaleString()}</td>
                           <td style={{ padding: "12px 8px", color: "var(--primary)", fontWeight: 700, textAlign: "right" }}>{s.total.toLocaleString()}</td>
