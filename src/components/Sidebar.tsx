@@ -147,10 +147,10 @@ const Sidebar: React.FC<SidebarProps> = ({ onNewChat, onOpenSettings }) => {
         {/* User row */}
         <div className="flex items-center gap-2.5 px-1">
           <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#5483B3] to-[#C1E8FF] flex items-center justify-center shrink-0">
-            <span className="text-[#021024] font-bold text-[10px]">Ak</span>
+            <span className="text-[#021024] font-bold text-[10px]">Kl</span>
           </div>
           <div className="min-w-0">
-            <p className="text-xs text-[#C1E8FF] font-medium truncate">Apkirota</p>
+            <p className="text-xs text-[#C1E8FF] font-medium truncate">KeyLooper</p>
             <p className="text-[10px] text-[#7DA0CA]/40">Local · Free</p>
           </div>
         </div>

@@ -1,6 +1,6 @@
-# Apkirota
+# KeyLooper
 
-<img src="app-icon.svg" width="120" align="right" alt="Apkirota Icon" />
+<img src="app-icon.svg" width="120" align="right" alt="KeyLooper Icon" />
 
 **Unlimited Gemini API desktop client powered by secure, local sequential key rotation.**
 
@@ -65,7 +65,7 @@ npm run tauri dev
 
 ## How It Works — Routing & Rotation
 
-Apkirota uses a rotation engine to distribute your API requests based on your selected mode:
+KeyLooper uses a rotation engine to distribute your API requests based on your selected mode:
 
 ### 1. Normal Mode (Single Active Key)
 In Normal mode, the app uses the **first healthy key** in your list. 
@@ -106,7 +106,7 @@ User sends message M4 → Key A (index 0) → wraps back to 0
 ## Project Structure
 
 ```
-Apkirota/
+KeyLooper/
 ├── src-tauri/         # Rust backend (Tauri windowing & OS keyring)
 ├── src/
 │   ├── components/    # UI components (Sidebar, ChatBubble, InputPanel, etc.)

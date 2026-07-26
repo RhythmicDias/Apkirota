@@ -23,8 +23,12 @@ fn save_api_key(key_id: String, key_value: String) -> Result<(), String> {
     if key_value.len() > 256 {
         return Err("API key value exceeds maximum length.".to_string());
     }
-    let entry = Entry::new("apkirota", &key_id).map_err(|e| format!("Keyring error: {}", e))?;
-    entry.set_password(&key_value).map_err(|e| format!("Failed to save key: {}", e))?;
+    if let Ok(entry) = Entry::new("apkirota", &key_id) {
+        let _ = entry.set_password(&key_value);
+    }
+    if let Ok(entry) = Entry::new("keylooper", &key_id) {
+        let _ = entry.set_password(&key_value);
+    }
     Ok(())
 }
 
@@ -33,12 +37,21 @@ fn load_api_key(key_id: String) -> Result<String, String> {
     if !is_valid_uuid(&key_id) {
         return Err("Invalid key ID format.".to_string());
     }
-    let entry = Entry::new("apkirota", &key_id).map_err(|e| format!("Keyring error: {}", e))?;
-    match entry.get_password() {
-        Ok(pass) => Ok(pass),
-        Err(keyring::Error::NoEntry) => Ok("".to_string()),
-        Err(_) => Err("Failed to load key from secure storage.".to_string()),
+    if let Ok(entry) = Entry::new("apkirota", &key_id) {
+        if let Ok(pass) = entry.get_password() {
+            if !pass.is_empty() {
+                return Ok(pass);
+            }
+        }
     }
+    if let Ok(entry) = Entry::new("keylooper", &key_id) {
+        if let Ok(pass) = entry.get_password() {
+            if !pass.is_empty() {
+                return Ok(pass);
+            }
+        }
+    }
+    Ok("".to_string())
 }
 
 #[tauri::command]
@@ -46,12 +59,12 @@ fn delete_api_key(key_id: String) -> Result<(), String> {
     if !is_valid_uuid(&key_id) {
         return Err("Invalid key ID format.".to_string());
     }
-    let entry = Entry::new("apkirota", &key_id).map_err(|e| format!("Keyring error: {}", e))?;
-    match entry.delete_credential() {
-        Ok(_) => Ok(()),
-        Err(keyring::Error::NoEntry) => Ok(()),
-        Err(_) => Err("Failed to delete key from secure storage.".to_string()),
+    let entry = Entry::new("keylooper", &key_id).map_err(|e| format!("Keyring error: {}", e))?;
+    let _ = entry.delete_credential();
+    if let Ok(legacy_entry) = Entry::new("apkirota", &key_id) {
+        let _ = legacy_entry.delete_credential();
     }
+    Ok(())
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

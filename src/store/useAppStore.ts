@@ -1,10 +1,10 @@
 /**
  * useAppStore.ts
- * Central Zustand store for Apkirota — manages API keys, sessions, mode, and settings.
+ * Central Zustand store for KeyLooper — manages API keys, sessions, mode, and settings.
  */
 
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
 import { v4 as uuidv4 } from "uuid";
 import { invoke } from "@tauri-apps/api/core";
 import type { ApiKeyEntry, KeyStatus } from "../lib/KeyRotator";
@@ -16,6 +16,8 @@ export type AppMode = "normal" | "unlimited";
 
 export const SUPPORTED_MODELS = [
   "gemini-3.5-flash",
+  "gemini-3.5-flash-lite",
+  "gemini-3.6-flash",
   "gemini-3.1-flash-lite",
   "gemini-2.5-flash-lite",
   "gemini-2.5-flash",
@@ -458,9 +460,58 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: "apkirota-storage",
+      storage: createJSONStorage(() => ({
+        getItem: (name) => {
+          const current = localStorage.getItem(name);
+          const legacy = localStorage.getItem("apkirota-storage");
+          if (current) {
+            try {
+              const pCurrent = JSON.parse(current);
+              if (Array.isArray(pCurrent.state?.apiKeys) && pCurrent.state.apiKeys.length > 0) {
+                return current;
+              }
+            } catch (e) {}
+          }
+          if (legacy) {
+            try {
+              const pLegacy = JSON.parse(legacy);
+              if (Array.isArray(pLegacy.state?.apiKeys) && pLegacy.state.apiKeys.length > 0) {
+                return legacy;
+              }
+            } catch (e) {}
+          }
+          return current || legacy || null;
+        },
+        setItem: (name, value) => {
+          localStorage.setItem(name, value);
+          localStorage.setItem("apkirota-storage", value);
+        },
+        removeItem: (name) => {
+          localStorage.removeItem(name);
+          localStorage.removeItem("apkirota-storage");
+        },
+      })),
       merge: (persistedState: any, currentState) => {
         try {
           const merged = { ...currentState, ...(persistedState as object) };
+
+          // Recovery fallback: if merged.apiKeys is empty, check legacy storage keys
+          if (!Array.isArray(merged.apiKeys) || merged.apiKeys.length === 0) {
+            try {
+              const legacyRaw = localStorage.getItem("apkirota-storage");
+              if (legacyRaw) {
+                const legacyParsed = JSON.parse(legacyRaw);
+                if (Array.isArray(legacyParsed.state?.apiKeys) && legacyParsed.state.apiKeys.length > 0) {
+                  merged.apiKeys = legacyParsed.state.apiKeys;
+                }
+                if ((!Array.isArray(merged.sessions) || merged.sessions.length === 0) && Array.isArray(legacyParsed.state?.sessions)) {
+                  merged.sessions = legacyParsed.state.sessions;
+                }
+              }
+            } catch (e) {
+              console.error("Error reading legacy storage in merge:", e);
+            }
+          }
           const existingSkills = Array.isArray(merged.skills) ? merged.skills : [];
           const existingNames = new Set(
             existingSkills
@@ -480,6 +531,12 @@ export const useAppStore = create<AppState>()(
             }
           }
           merged.skills = skillsToKeep;
+          if (!Array.isArray(merged.customModels)) {
+            merged.customModels = [];
+          }
+          if (!Array.isArray(merged.deletedModels)) {
+            merged.deletedModels = [];
+          }
           if (!merged.selectedModel || typeof merged.selectedModel !== "string") {
             merged.selectedModel = "gemini-2.5-flash";
           }

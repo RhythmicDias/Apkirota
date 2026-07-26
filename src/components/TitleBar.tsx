@@ -39,7 +39,7 @@ const TitleBar: React.FC = () => {
             pointerEvents: "none"
           }}
         >
-          ApKiRota
+          KeyLooper
         </span>
       </div>
 

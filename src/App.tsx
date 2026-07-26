@@ -497,7 +497,7 @@ const App: React.FC = () => {
             letterSpacing: "-0.01em",
           }}
         >
-          ApKiRota
+          KeyLooper
         </span>
 
         {/* Normal / Unlimited mode switcher */}
@@ -1183,19 +1183,33 @@ const App: React.FC = () => {
 
         <div style={{ width: "1px", height: "20px", background: "rgba(213,205,197,0.45)", margin: "0 8px" }} />
 
-        {/* User avatar */}
-        <div
-          className="flex items-center justify-center rounded-full font-bold cursor-pointer select-none"
+        {/* Google AI Studio button */}
+        <button
+          onClick={async () => {
+            try {
+              const { openUrl } = await import("@tauri-apps/plugin-opener");
+              await openUrl("https://aistudio.google.com/");
+            } catch (err) {
+              window.open("https://aistudio.google.com/", "_blank");
+            }
+          }}
+          title="Open Google AI Studio (Get API Keys)"
+          className="flex items-center justify-center rounded-full font-bold cursor-pointer select-none transition-all hover:scale-105 active:scale-95 shadow-sm"
           style={{
-            width: "36px", height: "36px",
+            minWidth: "36px",
+            height: "36px",
+            padding: "0 8px",
             background: "#d9e5dd",
             color: "#1a2c24",
             fontFamily: "'JetBrains Mono', monospace",
-            fontSize: "13px",
+            fontSize: "11px",
+            fontWeight: 700,
+            border: "1px solid rgba(26, 44, 36, 0.15)",
+            letterSpacing: "0.02em",
           }}
         >
-          S
-        </div>
+          API
+        </button>
 
         {/* Settings */}
         <button

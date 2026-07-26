@@ -159,13 +159,13 @@ const SettingsView: React.FC = () => {
     }));
     const blob = new Blob([JSON.stringify(sanitized, null, 2)], { type: "application/json" });
     const url  = URL.createObjectURL(blob);
-    const a    = Object.assign(document.createElement("a"), { href: url, download: `apkirota-history-${Date.now()}.json` });
+    const a    = Object.assign(document.createElement("a"), { href: url, download: `keylooper-history-${Date.now()}.json` });
     a.click(); URL.revokeObjectURL(url);
   };
 
   const handleExportMd = () => {
     if (!confirm("Export will include all chat messages. The exported file may contain sensitive conversation content.\n\nProceed with export?")) return;
-    let md = "# Apkirota Chat Export\n\n";
+    let md = "# KeyLooper Chat Export\n\n";
     for (const s of sessions) {
       md += `## ${s.title}\n\n`;
       for (const m of s.messages) {
@@ -174,7 +174,7 @@ const SettingsView: React.FC = () => {
     }
     const blob = new Blob([md], { type: "text/markdown" });
     const url  = URL.createObjectURL(blob);
-    const a    = Object.assign(document.createElement("a"), { href: url, download: `apkirota-history-${Date.now()}.md` });
+    const a    = Object.assign(document.createElement("a"), { href: url, download: `keylooper-history-${Date.now()}.md` });
     a.click(); URL.revokeObjectURL(url);
   };
 

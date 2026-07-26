@@ -207,7 +207,7 @@ const InputPanel: React.FC<InputPanelProps> = ({
                 ? "How can I help you today?"
                 : disabled
                 ? "Waiting for response..."
-                : "Message Apkirota… (Ctrl+Enter)"
+                : "Message KeyLooper… (Ctrl+Enter)"
             }
             rows={1}
             className={`w-full bg-transparent resize-none text-[#C1E8FF] placeholder-[#7DA0CA]/40 focus:outline-none leading-relaxed disabled:opacity-40 ${
