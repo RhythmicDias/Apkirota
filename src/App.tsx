@@ -234,28 +234,35 @@ const App: React.FC = () => {
   // Global Keyboard Shortcuts
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
-      if (!e.altKey) return;
+      // Supports Option key on macOS (e.altKey) or Alt key on Windows/Linux
+      const isAltOrOption = e.altKey;
+      if (!isAltOrOption) return;
+
       const key = e.key.toLowerCase();
-      if (key === "n") {
+      // On macOS Option+N/H/A/S/M/G can produce special characters (e.g. Option+N yields "˜" or "n" depending on layout)
+      // e.code provides the physical key location (e.g. "KeyN", "KeyH")
+      const code = e.code.toLowerCase();
+
+      if (key === "n" || code === "keyn") {
         e.preventDefault();
         createSession();
         setView("chat");
         setTimeout(() => {
           (chatInputRef.current || welcomeInputRef.current)?.focus();
         }, 50);
-      } else if (key === "h") {
+      } else if (key === "h" || code === "keyh") {
         e.preventDefault();
         setView("history");
-      } else if (key === "a") {
+      } else if (key === "a" || code === "keya") {
         e.preventDefault();
         setView("skills");
-      } else if (key === "s") {
+      } else if (key === "s" || code === "keys") {
         e.preventDefault();
         setView("settings");
-      } else if (key === "m") {
+      } else if (key === "m" || code === "keym") {
         e.preventDefault();
         toggleRecording();
-      } else if (key === "g") {
+      } else if (key === "g" || code === "keyg") {
         e.preventDefault();
         const sel = modelSelectRef.current;
         if (sel) {
