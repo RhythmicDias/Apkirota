@@ -256,6 +256,12 @@ const App: React.FC = () => {
     }
   }, [text, currentView]);
 
+  useEffect(() => {
+    if (!isLoading && currentView === "chat") {
+      chatInputRef.current?.focus();
+    }
+  }, [isLoading, currentView]);
+
   useEffect(() => { if (!activeSessionId) createSession(); }, []);
   useEffect(() => { messagesEnd.current?.scrollIntoView({ behavior: "smooth" }); }, [activeSession?.messages.length]);
 
