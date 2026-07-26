@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useAppStore, ModelConfig, selectAvailableModels } from "../store/useAppStore";
+import { useAppStore, ModelConfig, selectAvailableModels, SUPPORTED_MODELS } from "../store/useAppStore";
 
 const Toggle: React.FC<{ checked: boolean; onChange: (v: boolean) => void }> = ({ checked, onChange }) => (
   <button
@@ -35,10 +35,20 @@ export const ModelConfigPanel: React.FC = () => {
 
   const handleAddCustomModel = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newModelInput.trim()) return;
-    addCustomModel(newModelInput.trim());
-    setModel(newModelInput.trim());
+    const trimmed = newModelInput.trim();
+    if (!trimmed) return;
+    addCustomModel(trimmed);
+    setModel(trimmed);
     setNewModelInput("");
+  };
+
+  const handleRemoveModel = (modelName: string) => {
+    if (confirm(`Remove custom model "${modelName}"?`)) {
+      removeCustomModel(modelName);
+      if (selectedModel === modelName) {
+        setModel(SUPPORTED_MODELS[0]);
+      }
+    }
   };
 
   const config = modelConfigs[selectedModel] || {
@@ -70,43 +80,21 @@ export const ModelConfigPanel: React.FC = () => {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "20px", paddingBottom: "40px" }} className="fade-in">
-      {/* Active Model Selection Card */}
-      <div style={{ padding: "20px", background: "var(--input-bg)", borderRadius: "16px", border: "1px solid var(--border-color)", display: "flex", flexDirection: "column", gap: "12px" }}>
-        <div>
-          <h3 style={{ fontSize: "16px", fontWeight: 700, color: "var(--text-color)", margin: "0 0 2px 0" }}>Active Model</h3>
-          <p style={{ fontSize: "13px", color: "var(--text-color-muted)", margin: 0 }}>
-            Select the default Gemini model used for conversation generations.
-          </p>
-        </div>
-        <select
-          value={selectedModel}
-          onChange={(e) => setModel(e.target.value)}
-          style={{
-            padding: "10px 14px", borderRadius: "8px", border: "1px solid var(--border-color)",
-            background: "var(--bg-color)", color: "var(--text-color)", fontSize: "13px", outline: "none",
-            width: "100%", cursor: "pointer"
-          }}
-        >
-          {availableModels.map((m) => (
-            <option key={m} value={m}>{m}</option>
-          ))}
-        </select>
-      </div>
-
-      {/* Custom Model Addition Card */}
+      
+      {/* Add New Custom Model Card Section */}
       <div style={{ display: "flex", flexDirection: "column", gap: "12px", padding: "20px", background: "var(--input-bg)", borderRadius: "16px", border: "1px solid var(--border-color)" }}>
         <div>
-          <h3 style={{ fontSize: "16px", fontWeight: 700, color: "var(--text-color)", margin: "0 0 2px 0", display: "flex", alignItems: "center", gap: "6px" }}>
-            Add Custom Gemini Model
+          <h3 style={{ fontSize: "16px", fontWeight: 700, color: "var(--text-color)", margin: "0 0 2px 0" }}>
+            Add New Model Endpoint
           </h3>
           <p style={{ fontSize: "13px", color: "var(--text-color-muted)", margin: 0 }}>
-            Register new or experimental Gemini model endpoints to your selection list.
+            Register new or custom Gemini model identifiers (e.g. newly released models or experimental endpoints).
           </p>
         </div>
         <form onSubmit={handleAddCustomModel} style={{ display: "flex", gap: "8px" }}>
           <input
             type="text"
-            placeholder="e.g. gemini-3.5-pro or gemini-experimental"
+            placeholder="e.g. gemini-3.5-pro or gemini-experimental-0301"
             value={newModelInput}
             onChange={(e) => setNewModelInput(e.target.value)}
             style={{
@@ -120,24 +108,97 @@ export const ModelConfigPanel: React.FC = () => {
             style={{
               padding: "8px 16px", background: "var(--primary)", color: "white", borderRadius: "8px",
               fontSize: "13px", fontWeight: 600, border: "none", cursor: newModelInput.trim() ? "pointer" : "not-allowed",
-              opacity: newModelInput.trim() ? 1 : 0.5
+              opacity: newModelInput.trim() ? 1 : 0.5, display: "flex", alignItems: "center", gap: "6px"
             }}
           >
+            <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>add</span>
             Add Model
           </button>
         </form>
-        {customModels.length > 0 && (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginTop: "4px" }}>
-            {customModels.map((cm) => (
-              <span key={cm} style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "4px 10px", borderRadius: "16px", background: "var(--bg-color)", border: "1px solid var(--border-color)", fontSize: "12px", color: "var(--text-color)" }}>
-                {cm}
-                <button type="button" onClick={() => removeCustomModel(cm)} style={{ border: "none", background: "none", color: "#ba1a1a", cursor: "pointer", display: "flex", padding: 0 }}>
-                  <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>close</span>
-                </button>
-              </span>
-            ))}
-          </div>
-        )}
+      </div>
+
+      {/* Available Models Cards Gallery */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "12px", padding: "20px", background: "var(--input-bg)", borderRadius: "16px", border: "1px solid var(--border-color)" }}>
+        <div>
+          <h3 style={{ fontSize: "16px", fontWeight: 700, color: "var(--text-color)", margin: "0 0 2px 0" }}>
+            Available Model Cards ({availableModels.length})
+          </h3>
+          <p style={{ fontSize: "13px", color: "var(--text-color-muted)", margin: 0 }}>
+            Select a model card to configure its specific tools, reasoning level, and system parameters below.
+          </p>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "12px", marginTop: "4px" }}>
+          {availableModels.map((m) => {
+            const isSelected = selectedModel === m;
+            const isCustom = customModels.includes(m);
+            const mConfig = modelConfigs[m];
+            const activeToolCount = mConfig ? Object.values(mConfig.tools).filter(Boolean).length : 0;
+
+            return (
+              <div
+                key={m}
+                onClick={() => setModel(m)}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                  padding: "12px 14px",
+                  borderRadius: "12px",
+                  border: isSelected ? "2px solid var(--primary)" : "1px solid var(--border-color)",
+                  background: isSelected ? "var(--input-bg)" : "var(--bg-color)",
+                  cursor: "pointer",
+                  transition: "all 0.15s ease-in-out",
+                  position: "relative",
+                  boxShadow: isSelected ? "0 2px 8px rgba(0,0,0,0.08)" : "none"
+                }}
+              >
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "6px", marginBottom: "6px" }}>
+                    <span style={{ fontSize: "10px", fontFamily: "'JetBrains Mono', monospace", padding: "2px 6px", borderRadius: "4px", background: isCustom ? "rgba(177,98,77,0.15)" : "var(--input-bg)", color: isCustom ? "var(--primary)" : "var(--text-color-muted)", border: "1px solid var(--border-color)", fontWeight: 600 }}>
+                      {isCustom ? "CUSTOM" : "BUILT-IN"}
+                    </span>
+                    {isSelected && (
+                      <span style={{ fontSize: "10px", fontFamily: "'JetBrains Mono', monospace", padding: "2px 6px", borderRadius: "4px", background: "var(--primary)", color: "white", fontWeight: 700 }}>
+                        ACTIVE
+                      </span>
+                    )}
+                  </div>
+                  <h4 style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-color)", margin: "4px 0", wordBreak: "break-word" }}>
+                    {m}
+                  </h4>
+                  <p style={{ fontSize: "11px", color: "var(--text-color-muted)", margin: 0, fontFamily: "'JetBrains Mono', monospace" }}>
+                    {activeToolCount > 0 ? `${activeToolCount} tools active` : "Standard capabilities"}
+                  </p>
+                </div>
+
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "12px", paddingTop: "8px", borderTop: "1px solid var(--border-color)" }}>
+                  <span style={{ fontSize: "11px", color: isSelected ? "var(--primary)" : "var(--text-color-muted)", fontWeight: 500 }}>
+                    {isSelected ? "Currently Selected" : "Click to Select"}
+                  </span>
+                  {isCustom && (
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); handleRemoveModel(m); }}
+                      style={{ border: "none", background: "transparent", color: "#ba1a1a", cursor: "pointer", display: "flex", padding: "2px" }}
+                      title="Retire/Delete custom model"
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>delete</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Active Model Indicator */}
+      <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "10px 14px", borderRadius: "12px", background: "var(--input-bg)", border: "1px solid var(--border-color)" }}>
+        <span className="material-symbols-outlined" style={{ fontSize: "20px", color: "var(--primary)" }}>tune</span>
+        <span style={{ fontSize: "14px", color: "var(--text-color)" }}>
+          Configuring settings for active model: <strong style={{ color: "var(--primary)", fontFamily: "'JetBrains Mono', monospace" }}>{selectedModel}</strong>
+        </span>
       </div>
 
       {/* System Instructions & Thinking Level Card */}
@@ -189,7 +250,7 @@ export const ModelConfigPanel: React.FC = () => {
         <div>
           <h3 style={{ fontSize: "16px", fontWeight: 700, color: "var(--text-color)", margin: "0 0 2px 0" }}>Tools & Capabilities</h3>
           <p style={{ fontSize: "13px", color: "var(--text-color-muted)", margin: 0 }}>
-            Enable or disable extended Gemini model integrations.
+            Enable or disable extended Gemini model integrations for <strong style={{ fontFamily: "'JetBrains Mono', monospace" }}>{selectedModel}</strong>.
           </p>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
@@ -216,7 +277,7 @@ export const ModelConfigPanel: React.FC = () => {
       <div style={{ padding: "20px", background: "var(--input-bg)", borderRadius: "16px", border: "1px solid var(--border-color)", display: "flex", flexDirection: "column", gap: "16px" }}>
         <div>
           <h3 style={{ fontSize: "16px", fontWeight: 700, color: "var(--text-color)", margin: "0 0 2px 0" }}>Advanced Parameters</h3>
-          <p style={{ fontSize: "13px", color: "var(--text-color-muted)", margin: 0 }}>Fine-tune safety barriers and response constraints.</p>
+          <p style={{ fontSize: "13px", color: "var(--text-color-muted)", margin: 0 }}>Fine-tune safety barriers and response constraints for <strong style={{ fontFamily: "'JetBrains Mono', monospace" }}>{selectedModel}</strong>.</p>
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
@@ -226,8 +287,8 @@ export const ModelConfigPanel: React.FC = () => {
               value={config.advanced.mediaResolution}
               onChange={(e) => updateAdvanced("mediaResolution", e.target.value)}
               style={{
-                padding: "10px", borderRadius: "8px", border: "1px solid var(--border-color)",
-                background: "var(--input-bg)", color: "var(--text-color)", fontSize: "14px", outline: "none"
+                padding: "8px 12px", borderRadius: "8px", border: "1px solid var(--border-color)",
+                background: "var(--bg-color)", color: "var(--text-color)", fontSize: "13px", outline: "none"
               }}
             >
               <option value="Low">Low</option>
@@ -236,14 +297,14 @@ export const ModelConfigPanel: React.FC = () => {
             </select>
           </div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            <span style={{ fontSize: "14px", color: "var(--text-color)" }}>Safety settings</span>
+          <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+            <label style={{ fontSize: "11px", fontFamily: "'JetBrains Mono', monospace", color: "var(--text-color-muted)" }}>SAFETY SETTINGS</label>
             <select
               value={config.advanced.safetySettings}
               onChange={(e) => updateAdvanced("safetySettings", e.target.value)}
               style={{
-                padding: "10px", borderRadius: "8px", border: "1px solid var(--border-color)",
-                background: "var(--input-bg)", color: "var(--text-color)", fontSize: "14px", outline: "none"
+                padding: "8px 12px", borderRadius: "8px", border: "1px solid var(--border-color)",
+                background: "var(--bg-color)", color: "var(--text-color)", fontSize: "13px", outline: "none"
               }}
             >
               <option value="Block None">Block None</option>
@@ -252,29 +313,29 @@ export const ModelConfigPanel: React.FC = () => {
             </select>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-            <span style={{ fontSize: "14px", color: "var(--text-color)", width: "140px" }}>Add stop sequence</span>
+          <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+            <label style={{ fontSize: "11px", fontFamily: "'JetBrains Mono', monospace", color: "var(--text-color-muted)" }}>STOP SEQUENCE</label>
             <input
               type="text"
-              placeholder="Add stop..."
+              placeholder="e.g. END_TOKEN"
               value={config.advanced.stopSequences}
               onChange={(e) => updateAdvanced("stopSequences", e.target.value)}
               style={{
-                flex: 1, padding: "8px 12px", borderRadius: "8px", border: "1px solid var(--border-color)",
-                background: "var(--input-bg)", color: "var(--text-color)", fontSize: "14px", outline: "none"
+                padding: "8px 12px", borderRadius: "8px", border: "1px solid var(--border-color)",
+                background: "var(--bg-color)", color: "var(--text-color)", fontSize: "13px", outline: "none"
               }}
             />
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-            <span style={{ fontSize: "14px", color: "var(--text-color)", width: "140px" }}>Output length</span>
+          <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+            <label style={{ fontSize: "11px", fontFamily: "'JetBrains Mono', monospace", color: "var(--text-color-muted)" }}>MAX OUTPUT LENGTH</label>
             <input
               type="number"
               value={config.advanced.outputLength}
               onChange={(e) => updateAdvanced("outputLength", Number(e.target.value))}
               style={{
-                flex: 1, padding: "8px 12px", borderRadius: "8px", border: "1px solid var(--border-color)",
-                background: "var(--input-bg)", color: "var(--text-color)", fontSize: "14px", outline: "none"
+                padding: "8px 12px", borderRadius: "8px", border: "1px solid var(--border-color)",
+                background: "var(--bg-color)", color: "var(--text-color)", fontSize: "13px", outline: "none"
               }}
             />
           </div>
@@ -283,5 +344,3 @@ export const ModelConfigPanel: React.FC = () => {
     </div>
   );
 };
-
-export default ModelConfigPanel;
