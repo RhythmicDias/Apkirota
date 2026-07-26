@@ -75,24 +75,42 @@ function buildPayload(
   ].join(" ").toLowerCase();
 
   const wantsDocxExport = /\b(docx|word document|export docx|save as docx|download docx|save to word|download word|create word|create docx|make docx|make word)\b/i.test(allUserText);
+  const wantsHtmlExport = /\b(html|html file|export html|save as html|download html|create html|make html|single html)\b/i.test(allUserText);
+
+  const functionDeclarations: any[] = [];
 
   if (wantsDocxExport) {
-    tools.push({
-      functionDeclarations: [
-        {
-          name: "create_docx_file",
-          description: "Generate and save a .docx document to the user's computer. Use this when the user explicitly requests to create or export a Word (.docx) document.",
-          parameters: {
-            type: "OBJECT",
-            properties: {
-              filename: { type: "STRING", description: "The suggested filename, ending in .docx" },
-              content: { type: "STRING", description: "The raw text content to put into the document" }
-            },
-            required: ["filename", "content"]
-          }
-        }
-      ]
+    functionDeclarations.push({
+      name: "create_docx_file",
+      description: "Generate and save a .docx document to the user's computer. Use this when the user explicitly requests to create or export a Word (.docx) document.",
+      parameters: {
+        type: "OBJECT",
+        properties: {
+          filename: { type: "STRING", description: "The suggested filename, ending in .docx" },
+          content: { type: "STRING", description: "The raw text content to put into the document" }
+        },
+        required: ["filename", "content"]
+      }
     });
+  }
+
+  if (wantsHtmlExport) {
+    functionDeclarations.push({
+      name: "create_html_file",
+      description: "Generate and save a single-file standalone .html document to the user's computer. Use this when the user explicitly requests to create or export an HTML file.",
+      parameters: {
+        type: "OBJECT",
+        properties: {
+          filename: { type: "STRING", description: "The suggested filename, ending in .html" },
+          html_content: { type: "STRING", description: "The complete self-contained HTML code string, including <!DOCTYPE html>, <html>, <head> with styles, and <body>" }
+        },
+        required: ["filename", "html_content"]
+      }
+    });
+  }
+
+  if (functionDeclarations.length > 0) {
+    tools.push({ functionDeclarations });
   }
   const finalSystemPrompt = systemPrompt || modelConfig?.systemInstructions;
   
@@ -258,13 +276,44 @@ export async function sendMessage(
 
             if (filePath) {
               await writeFile(filePath, new Uint8Array(buffer));
-              text += `\n\n✅ **Success!** I generated the document and you saved it to \`${filePath}\`.`;
+              text += `\n\n✅ **Success!** I generated the Word document and you saved it to \`${filePath}\`.`;
             } else {
-              text += `\n\n❌ **Cancelled:** You cancelled saving the document.`;
+              text += `\n\n❌ **Cancelled:** You cancelled saving the Word document.`;
             }
           } catch (e: any) {
             console.error(e);
-            text += `\n\n❌ **Error:** Failed to generate document. ${e?.message || String(e)}`;
+            text += `\n\n❌ **Error:** Failed to generate Word document. ${e?.message || String(e)}`;
+          }
+        } else if (call.name === "create_html_file") {
+          try {
+            const { save } = await import("@tauri-apps/plugin-dialog");
+            const { writeFile } = await import("@tauri-apps/plugin-fs");
+
+            const htmlContent = call.args.html_content || call.args.content || "<html><body></body></html>";
+
+            const filePath = await save({
+              filters: [{ name: "HTML Document", extensions: ["html", "htm"] }],
+              defaultPath: (() => {
+                let name = (call.args.filename || "index.html")
+                  .replace(/[/\\]/g, "_")
+                  .replace(/\.\./g, "_")
+                  .replace(/[<>:"|?*]/g, "_")
+                  .trim();
+                if (!name.toLowerCase().endsWith(".html") && !name.toLowerCase().endsWith(".htm")) name += ".html";
+                return name;
+              })()
+            });
+
+            if (filePath) {
+              const encoder = new TextEncoder();
+              await writeFile(filePath, encoder.encode(htmlContent));
+              text += `\n\n✅ **Success!** I generated the HTML file and you saved it to \`${filePath}\`.`;
+            } else {
+              text += `\n\n❌ **Cancelled:** You cancelled saving the HTML file.`;
+            }
+          } catch (e: any) {
+            console.error(e);
+            text += `\n\n❌ **Error:** Failed to generate HTML file. ${e?.message || String(e)}`;
           }
         } else {
           // If it's a different function call, just show it
