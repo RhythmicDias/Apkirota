@@ -19,7 +19,8 @@
 - **Embedded Gemini Web App Launcher** — Quick access launcher to open the official Google Gemini Web App (`https://gemini.google.com/`) in a dedicated, secure Tauri web view window.
 - **Secure OS Keyring Integration** — API keys are stored securely using your operating system's native credential manager.
 - **Seamless Dark & Light Themes** — Modern color-scheme aware theme engine with full dark mode support, glassmorphism panels, and customized native dropdown menus.
-- **Multi-Format Upload & Docx Processing** — Drag-and-drop support for PDFs, DOCX documents, images (PNG, JPEG, WEBP), plain text, and CSV files.
+- **Audio Upload & Speech Transcription** — Upload audio files (MP3, WAV, M4A, OGG, AAC, WEBP audio) for automated AI audio transcription, translation, and analysis.
+- **Multi-Format Upload & Docx Processing** — Drag-and-drop support for PDFs, DOCX documents, audio files, images (PNG, JPEG, WEBP), plain text, and CSV files.
 - **Custom AI Skills & Agents** — Create and manage distinct personas with custom system prompts for specialized tasks (e.g., Code Review, Writing Assistance).
 - **Advanced Model Configuration** — Fine-tune AI behavior with adjustable thinking levels (Low, Medium, High), output lengths, safety settings, and grounding tools.
 - **Detailed Usage Statistics** — Track token consumption with comprehensive metrics broken down by day, model, and individual API key.
