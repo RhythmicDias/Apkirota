@@ -10,18 +10,32 @@
 
 ## Key Features
 
-- **Sequential API Key Rotation** — Pool up to 20+ free-tier Gemini keys and rotate them automatically, so you effectively never hit a rate limit
-- **Dual-Mode Operation** — Toggle between **Normal** (single active key) and **Unlimited** (full round-robin rotation) with an animated glowing switch
-- **Secure OS Keyring Integration** — API keys are stored securely using your operating system's native credential manager, rather than in plaintext
-- **Warm Charcoal Gray Theme** — Premium UI with a custom warm gray & terracotta palette, glassmorphism panels, and smooth micro-animations
-- **Multi-Format Upload Handler** — Drag-and-drop support for PDFs, images (PNG, JPEG, WEBP), plain text, and CSV files with full multimodal Gemini processing
-- **Custom AI Skills** — Create and manage distinct personas with custom system prompts for specialized tasks (e.g., Code Review, Writing Assistance)
-- **Advanced Model Configuration** — Fine-tune the AI's behavior with adjustable thinking levels (Low, Medium, High), output lengths, safety settings, and grounding tools
-- **Detailed Usage Statistics** — Track your API token consumption with comprehensive metrics broken down by day, by model, and by individual API key
-- **Session Management** — Organize your workflows into multiple concurrent chat sessions with auto-generated titles and local persistence
-- **Local-First Privacy** — API keys and chat history live exclusively on your device; nothing is ever sent to a third-party server
-- **Markdown & Code Highlighting** — Full GFM Markdown rendering with Prism syntax highlighting for code blocks
-- **Export Chat History** — Save your sessions as JSON or Markdown at any time
+- **Sequential API Key Rotation** — Pool up to 20+ free-tier Gemini keys and rotate them automatically, so you effectively never hit a rate limit.
+- **Dual-Mode Operation** — Toggle between **Normal** (single active key) and **Unlimited** (full round-robin rotation) with an animated glowing switch.
+- **Custom Model Management** — Easily add, configure, and manage custom Gemini AI models directly from the Settings interface.
+- **Auto-Focus Chat Input** — Continuous focus management ensuring the prompt textarea automatically regains focus after the AI responds.
+- **Native Keyboard Shortcuts** — Full cross-platform keyboard shortcut support (Windows & macOS) for quick navigation, sending messages, and controlling sessions.
+- **HTML Artifact Generation & Auto-Download** — Automatically generate HTML files/artifacts with instant client-side download triggers.
+- **Embedded Gemini Web App Launcher** — Quick access launcher to open the official Google Gemini Web App (`https://gemini.google.com/`) in a dedicated, secure Tauri web view window.
+- **Secure OS Keyring Integration** — API keys are stored securely using your operating system's native credential manager.
+- **Seamless Dark & Light Themes** — Modern color-scheme aware theme engine with full dark mode support, glassmorphism panels, and customized native dropdown menus.
+- **Multi-Format Upload & Docx Processing** — Drag-and-drop support for PDFs, DOCX documents, images (PNG, JPEG, WEBP), plain text, and CSV files.
+- **Custom AI Skills & Agents** — Create and manage distinct personas with custom system prompts for specialized tasks (e.g., Code Review, Writing Assistance).
+- **Advanced Model Configuration** — Fine-tune AI behavior with adjustable thinking levels (Low, Medium, High), output lengths, safety settings, and grounding tools.
+- **Detailed Usage Statistics** — Track token consumption with comprehensive metrics broken down by day, model, and individual API key.
+- **Session Management** — Organize workflows into multiple concurrent chat sessions with auto-generated titles and local persistence.
+- **Local-First Privacy** — API keys and chat history live exclusively on your device; nothing is sent to third-party tracking servers.
+
+---
+
+## Keyboard Shortcuts
+
+| Shortcut (Windows) | Shortcut (macOS) | Action |
+|---|---|---|
+| `Ctrl + Enter` | `Cmd + Enter` | Send message |
+| `Ctrl + Shift + N` | `Cmd + Shift + N` | New chat session |
+| `Ctrl + Shift + D` | `Cmd + Shift + D` | Toggle Dark / Light mode |
+| `Ctrl + ,` | `Cmd + ,` | Open Settings |
 
 ---
 
@@ -30,7 +44,7 @@
 ### Prerequisites
 - [Node.js](https://nodejs.org/) v18+
 - [Rust](https://rustup.rs/) (stable)
-- WebView2 (Windows — usually pre-installed)
+- WebView2 (Windows — pre-installed on Win 10/11)
 
 ### Steps
 
@@ -50,10 +64,10 @@ npm run tauri dev
 
 ## How It Works — Routing & Rotation
 
-Apkirota uses a sophisticated rotation engine to distribute your API requests based on your selected mode:
+Apkirota uses a rotation engine to distribute your API requests based on your selected mode:
 
 ### 1. Normal Mode (Single Active Key)
-In Normal mode, the app simply uses the **first healthy key** in your list. 
+In Normal mode, the app uses the **first healthy key** in your list. 
 - If a rate limit is hit, that key goes on a 60-second cooldown, and the app temporarily falls back to the next key.
 - If you pause for 2-3 minutes (allowing the cooldown to expire), the app immediately routes back through the primary key on your next request.
 
@@ -92,16 +106,16 @@ User sends message M4 → Key A (index 0) → wraps back to 0
 
 ```
 Apkirota/
-├── src-tauri/         # Rust backend (Tauri)
+├── src-tauri/         # Rust backend (Tauri windowing & OS keyring)
 ├── src/
-│   ├── components/    # UI components (Sidebar, ChatBubble, etc.)
+│   ├── components/    # UI components (Sidebar, ChatBubble, InputPanel, etc.)
 │   ├── lib/           # KeyRotator, Gemini client, file processor
-│   ├── store/         # Zustand global state
-│   ├── styles/        # Global CSS + Tailwind theme
+│   ├── store/         # Zustand global state management
+│   ├── styles/        # Global CSS + Tailwind theme & dark mode tokens
 │   └── __tests__/     # Vitest unit tests
 ├── index.html
 ├── package.json
-└── PROJECT.md
+└── FUTURE_UPDATE.md   # Architectural roadmap & future feature specs
 ```
 
 ---
