@@ -1086,7 +1086,7 @@ const App: React.FC = () => {
                       <span style={{ fontFamily: "'Crimson Pro', serif", fontSize: "13px", fontWeight: 500, color: "var(--text-color-muted)", whiteSpace: "nowrap" }}>{modelLabel(selectedModel)}</span>
                       <select ref={modelSelectRef} value={selectedModel} onChange={(e) => setModel(e.target.value)}
                         style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer", width: "100%", height: "100%" }}>
-                        {availableModels.map((m: string) => <option key={m} value={m}>{modelLabel(m)}</option>)}
+                        {availableModels.map((m: string) => <option key={m} value={m} style={{ background: "var(--bg-color)", color: "var(--text-color)" }}>{modelLabel(m)}</option>)}
                       </select>
                       <Icon name="expand_more" size={14} />
                     </div>

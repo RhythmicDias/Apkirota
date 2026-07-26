@@ -273,7 +273,7 @@ const InputPanel: React.FC<InputPanelProps> = ({
                 className="appearance-none pl-2.5 pr-6 py-1 rounded-lg bg-transparent border border-[#5483B3]/20 text-[#7DA0CA] text-[11.5px] focus:outline-none cursor-pointer hover:border-[#5483B3]/40 transition-colors"
               >
                 {availableModels.map((m) => (
-                  <option key={m} value={m} className="bg-[#021024] text-[#C1E8FF]">
+                  <option key={m} value={m} style={{ background: "var(--bg-color)", color: "var(--text-color)" }}>
                     {m.replace("gemini-", "").replace("-", " ")}
                   </option>
                 ))}

@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 :root {
+  color-scheme: light;
   /* ── Day (Light) Mode Variables ── */
   --bg-color: #f8f5f1;
   --bg-image: url("https://www.transparenttextures.com/patterns/paper-fibers.png");
@@ -36,6 +37,7 @@
 }
 
 .dark {
+  color-scheme: dark;
   /* ── Night (Dark) Mode Variables (Warm Charcoal Gray) ── */
   --bg-color: #35302c;
   --bg-image: none;
@@ -238,4 +240,10 @@ h1, h2, h3, h4, h5, h6 {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(138, 129, 122, 0.5);
+}
+
+/* ─── Global Select & Option styling for Dark/Light theme ─ */
+select option {
+  background-color: var(--bg-color);
+  color: var(--text-color);
 }

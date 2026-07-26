@@ -73,7 +73,7 @@ const ChatHeader: React.FC = () => {
             className="appearance-none pl-3 pr-7 py-1.5 rounded-lg bg-[#052659]/60 border border-[#5483B3]/20 text-[#C1E8FF]/70 text-[11.5px] focus:outline-none cursor-pointer hover:border-[#5483B3]/40 transition-colors"
           >
             {availableModels.map((m) => (
-              <option key={m} value={m} className="bg-[#021024]">{m}</option>
+              <option key={m} value={m} style={{ background: "var(--bg-color)", color: "var(--text-color)" }}>{m}</option>
             ))}
           </select>
           <svg className="absolute right-2 top-1/2 -translate-y-1/2 w-2.5 h-2.5 text-[#7DA0CA]/40 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
