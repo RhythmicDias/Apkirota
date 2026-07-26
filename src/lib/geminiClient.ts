@@ -72,7 +72,7 @@ function buildPayload(
     functionDeclarations: [
       {
         name: "create_docx_file",
-        description: "Generate and save a .docx document to the user's computer. Use this when the user asks you to create a Word document.",
+        description: "Generate and save a .docx document to the user's computer. CRITICAL: You MUST ONLY call this tool if the user explicitly asks for a file export or explicitly uses keywords such as 'docx', 'word', 'file', or 'download'. Do NOT call this tool for normal queries or text responses.",
         parameters: {
           type: "OBJECT",
           properties: {

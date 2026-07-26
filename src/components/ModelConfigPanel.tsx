@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useAppStore, ModelConfig, selectAvailableModels, SUPPORTED_MODELS } from "../store/useAppStore";
+import { useAppStore, ModelConfig, selectAvailableModels } from "../store/useAppStore";
 
 const Toggle: React.FC<{ checked: boolean; onChange: (v: boolean) => void }> = ({ checked, onChange }) => (
   <button
@@ -29,7 +29,7 @@ export const ModelConfigPanel: React.FC = () => {
   const availableModels = useAppStore(selectAvailableModels);
   const customModels = useAppStore((s) => s.customModels);
   const addCustomModel = useAppStore((s) => s.addCustomModel);
-  const removeCustomModel = useAppStore((s) => s.removeCustomModel);
+  const deleteModel = useAppStore((s) => s.deleteModel);
 
   const [newModelInput, setNewModelInput] = useState("");
 
@@ -43,10 +43,16 @@ export const ModelConfigPanel: React.FC = () => {
   };
 
   const handleRemoveModel = (modelName: string) => {
-    if (confirm(`Remove custom model "${modelName}"?`)) {
-      removeCustomModel(modelName);
+    const nextAvailable = availableModels.find((m) => m !== modelName);
+    if (!nextAvailable) {
+      alert("Cannot delete the only available model.");
+      return;
+    }
+
+    if (confirm(`Remove model "${modelName}" from active models list?`)) {
+      deleteModel(modelName);
       if (selectedModel === modelName) {
-        setModel(SUPPORTED_MODELS[0]);
+        setModel(nextAvailable);
       }
     }
   };
@@ -176,16 +182,31 @@ export const ModelConfigPanel: React.FC = () => {
                   <span style={{ fontSize: "11px", color: isSelected ? "var(--primary)" : "var(--text-color-muted)", fontWeight: 500 }}>
                     {isSelected ? "Currently Selected" : "Click to Select"}
                   </span>
-                  {isCustom && (
-                    <button
-                      type="button"
-                      onClick={(e) => { e.stopPropagation(); handleRemoveModel(m); }}
-                      style={{ border: "none", background: "transparent", color: "#ba1a1a", cursor: "pointer", display: "flex", padding: "2px" }}
-                      title="Retire/Delete custom model"
-                    >
-                      <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>delete</span>
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); handleRemoveModel(m); }}
+                    style={{
+                      border: "none",
+                      background: "transparent",
+                      color: "var(--text-color-muted)",
+                      cursor: "pointer",
+                      display: "flex",
+                      padding: "4px",
+                      borderRadius: "6px",
+                      transition: "color 0.15s, background 0.15s"
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.color = "#ba1a1a";
+                      e.currentTarget.style.background = "rgba(186, 26, 26, 0.1)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.color = "var(--text-color-muted)";
+                      e.currentTarget.style.background = "transparent";
+                    }}
+                    title={`Delete/Hide model ${m}`}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>delete</span>
+                  </button>
                 </div>
               </div>
             );

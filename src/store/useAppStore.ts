@@ -154,8 +154,10 @@ interface AppState {
   modelConfigs: Record<string, ModelConfig>;
   updateModelConfig: (model: string, config: Partial<ModelConfig>) => void;
   customModels: string[];
+  deletedModels: string[];
   addCustomModel: (model: string) => void;
   removeCustomModel: (model: string) => void;
+  deleteModel: (model: string) => void;
 
   // Selected Model
   selectedModel: string;
@@ -259,16 +261,23 @@ export const useAppStore = create<AppState>()(
           },
         })),
       customModels: [],
+      deletedModels: [],
       addCustomModel: (model) => {
         const trimmed = model.trim();
         if (!trimmed) return;
         set((s) => ({
           customModels: s.customModels.includes(trimmed) ? s.customModels : [...s.customModels, trimmed],
+          deletedModels: s.deletedModels.filter((m) => m !== trimmed),
         }));
       },
       removeCustomModel: (model) =>
         set((s) => ({
           customModels: s.customModels.filter((m) => m !== model),
+        })),
+      deleteModel: (model) =>
+        set((s) => ({
+          customModels: s.customModels.filter((m) => m !== model),
+          deletedModels: s.deletedModels.includes(model) ? s.deletedModels : [...s.deletedModels, model],
         })),
       selectedModel: "gemini-2.5-flash",
       setModel: (model) => set({ selectedModel: model }),
@@ -511,6 +520,7 @@ export const useAppStore = create<AppState>()(
           activeSessionId: state.historyEnabled ? state.activeSessionId : null,
           skills: state.skills,
           customModels: state.customModels || [],
+          deletedModels: state.deletedModels || [],
           historyEnabled: state.historyEnabled,
           theme: state.theme,
           usageRecords: state.usageRecords,
@@ -525,15 +535,19 @@ export const useAppStore = create<AppState>()(
 // ─── Selectors ────────────────────────────────────────────────────────────────
 
 let cachedCustomModels: string[] | undefined;
+let cachedDeletedModels: string[] | undefined;
 let cachedAvailableModels: string[] = [...SUPPORTED_MODELS];
 
 export const selectAvailableModels = (s: AppState): string[] => {
-  if (s.customModels !== cachedCustomModels) {
+  if (s.customModels !== cachedCustomModels || s.deletedModels !== cachedDeletedModels) {
     cachedCustomModels = s.customModels;
-    cachedAvailableModels = [
+    cachedDeletedModels = s.deletedModels;
+    const all = [
       ...SUPPORTED_MODELS,
       ...(s.customModels || []),
     ];
+    const deletedSet = new Set(s.deletedModels || []);
+    cachedAvailableModels = all.filter((m) => !deletedSet.has(m));
   }
   return cachedAvailableModels;
 };
