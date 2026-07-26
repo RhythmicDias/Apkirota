@@ -67,23 +67,33 @@ function buildPayload(
   if (modelConfig?.tools?.groundingGoogleSearch) {
     tools.push({ googleSearch: {} });
   }
-  // Include the local DOCX generation tool
-  tools.push({
-    functionDeclarations: [
-      {
-        name: "create_docx_file",
-        description: "Generate and save a .docx document to the user's computer. CRITICAL: You MUST ONLY call this tool if the user explicitly asks for a file export or explicitly uses keywords such as 'docx', 'word', 'file', or 'download'. Do NOT call this tool for normal queries or text responses.",
-        parameters: {
-          type: "OBJECT",
-          properties: {
-            filename: { type: "STRING", description: "The suggested filename, ending in .docx" },
-            content: { type: "STRING", description: "The raw text content to put into the document" }
-          },
-          required: ["filename", "content"]
+  // Only include the local DOCX generation tool if the prompt/history/system prompt explicitly asks for document export
+  const allUserText = [
+    systemPrompt || "",
+    ...history.filter((m) => m.role === "user").flatMap((m) => m.parts.map((p) => p.text || "")),
+    ...userParts.map((p) => p.text || ""),
+  ].join(" ").toLowerCase();
+
+  const wantsDocxExport = /\b(docx|word document|export docx|save as docx|download docx|save to word|download word|create word|create docx|make docx|make word)\b/i.test(allUserText);
+
+  if (wantsDocxExport) {
+    tools.push({
+      functionDeclarations: [
+        {
+          name: "create_docx_file",
+          description: "Generate and save a .docx document to the user's computer. Use this when the user explicitly requests to create or export a Word (.docx) document.",
+          parameters: {
+            type: "OBJECT",
+            properties: {
+              filename: { type: "STRING", description: "The suggested filename, ending in .docx" },
+              content: { type: "STRING", description: "The raw text content to put into the document" }
+            },
+            required: ["filename", "content"]
+          }
         }
-      }
-    ]
-  });
+      ]
+    });
+  }
   const finalSystemPrompt = systemPrompt || modelConfig?.systemInstructions;
   
   const stopSequences = modelConfig?.advanced?.stopSequences
