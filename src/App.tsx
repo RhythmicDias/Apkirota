@@ -229,6 +229,53 @@ const App: React.FC = () => {
 
   const welcomeInputRef = useRef<HTMLTextAreaElement>(null);
   const chatInputRef    = useRef<HTMLTextAreaElement>(null);
+  const modelSelectRef  = useRef<HTMLSelectElement>(null);
+
+  // Global Keyboard Shortcuts
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if (!e.altKey) return;
+      const key = e.key.toLowerCase();
+      if (key === "n") {
+        e.preventDefault();
+        createSession();
+        setView("chat");
+        setTimeout(() => {
+          (chatInputRef.current || welcomeInputRef.current)?.focus();
+        }, 50);
+      } else if (key === "h") {
+        e.preventDefault();
+        setView("history");
+      } else if (key === "a") {
+        e.preventDefault();
+        setView("skills");
+      } else if (key === "s") {
+        e.preventDefault();
+        setView("settings");
+      } else if (key === "m") {
+        e.preventDefault();
+        toggleRecording();
+      } else if (key === "g") {
+        e.preventDefault();
+        const sel = modelSelectRef.current;
+        if (sel) {
+          sel.focus();
+          if (typeof sel.showPicker === "function") {
+            try {
+              sel.showPicker();
+            } catch {
+              sel.click();
+            }
+          } else {
+            sel.click();
+          }
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleGlobalKeyDown);
+    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
+  }, [createSession, setView, toggleRecording]);
 
   // Sync theme
   useEffect(() => {
@@ -735,6 +782,7 @@ const App: React.FC = () => {
                         {modelLabel(selectedModel)}
                       </span>
                       <select
+                        ref={modelSelectRef}
                         value={selectedModel}
                         onChange={(e) => setModel(e.target.value)}
                         style={{
@@ -1029,7 +1077,7 @@ const App: React.FC = () => {
                   <div className="flex items-center" style={{ gap: "12px" }}>
                     <div className="relative flex items-center rounded-full" style={{ padding: "6px 16px 6px 12px", background: "var(--bg-color)", border: "1px solid var(--border-color)", gap: "6px" }}>
                       <span style={{ fontFamily: "'Crimson Pro', serif", fontSize: "13px", fontWeight: 500, color: "var(--text-color-muted)", whiteSpace: "nowrap" }}>{modelLabel(selectedModel)}</span>
-                      <select value={selectedModel} onChange={(e) => setModel(e.target.value)}
+                      <select ref={modelSelectRef} value={selectedModel} onChange={(e) => setModel(e.target.value)}
                         style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer", width: "100%", height: "100%" }}>
                         {availableModels.map((m: string) => <option key={m} value={m}>{modelLabel(m)}</option>)}
                       </select>
