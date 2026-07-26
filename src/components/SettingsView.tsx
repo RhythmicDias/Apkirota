@@ -193,124 +193,91 @@ const SettingsView: React.FC = () => {
       }}
       className="fade-in"
     >
-      {/* Back navigation */}
-      <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "32px" }}>
+      {/* Back navigation & Header */}
+      <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "24px" }}>
         <button
           onClick={() => setView("chat")}
           style={{
-            width: "40px",
-            height: "40px",
+            width: "36px",
+            height: "36px",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            borderRadius: "9999px",
+            borderRadius: "12px",
             border: "1px solid var(--border-color)",
             color: "var(--text-color-muted)",
-            background: "transparent",
+            background: "var(--input-bg)",
             cursor: "pointer",
             transition: "background 0.2s"
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = "var(--input-bg)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "var(--border-color)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "var(--input-bg)"; }}
         >
-          <Icon name="arrow_back" size={20} />
+          <Icon name="arrow_back" size={18} />
         </button>
         <div>
-          <h2 style={{ fontSize: "28px", fontWeight: 700, color: "var(--text-color)", margin: 0, lineHeight: 1 }}>Settings</h2>
-          <p style={{ fontSize: "14px", color: "var(--text-color-muted)", margin: "4px 0 0 0" }}>Manage application configurations and API credentials</p>
+          <h2 style={{ fontSize: "22px", fontWeight: 700, color: "var(--text-color)", margin: 0, lineHeight: 1.2 }}>Settings</h2>
+          <p style={{ fontSize: "13px", color: "var(--text-color-muted)", margin: "2px 0 0 0" }}>Manage application configurations and API credentials</p>
         </div>
       </div>
 
-      {/* Tabs list */}
-      <div style={{ display: "flex", gap: "8px", marginBottom: "32px", borderBottom: "1px solid var(--border-color)", paddingBottom: "1px" }}>
-        <button
-          onClick={() => setActiveTab("api")}
-          style={{
-            padding: "10px 20px",
-            fontFamily: "'JetBrains Mono', monospace",
-            fontSize: "13px",
-            letterSpacing: "0.02em",
-            fontWeight: 500,
-            cursor: "pointer",
-            background: "transparent",
-            border: "none",
-            color: activeTab === "api" ? "var(--primary)" : "var(--text-color-muted)",
-            position: "relative"
-          }}
-        >
-          Configure API
-          {activeTab === "api" && (
-            <div style={{ position: "absolute", bottom: 0, left: 0, width: "100%", height: "2px", background: "var(--primary)" }} />
-          )}
-        </button>
-        <button
-          onClick={() => setActiveTab("model")}
-          style={{
-            padding: "10px 20px",
-            fontFamily: "'JetBrains Mono', monospace",
-            fontSize: "13px",
-            letterSpacing: "0.02em",
-            fontWeight: 500,
-            cursor: "pointer",
-            background: "transparent",
-            border: "none",
-            color: activeTab === "model" ? "var(--primary)" : "var(--text-color-muted)",
-            position: "relative"
-          }}
-        >
-          Model Settings
-          {activeTab === "model" && (
-            <div style={{ position: "absolute", bottom: 0, left: 0, width: "100%", height: "2px", background: "var(--primary)" }} />
-          )}
-        </button>
-        <button
-          onClick={() => setActiveTab("privacy")}
-          style={{
-            padding: "10px 20px",
-            fontFamily: "'JetBrains Mono', monospace",
-            fontSize: "13px",
-            letterSpacing: "0.02em",
-            fontWeight: 500,
-            cursor: "pointer",
-            background: "transparent",
-            border: "none",
-            color: activeTab === "privacy" ? "var(--primary)" : "var(--text-color-muted)",
-            position: "relative"
-          }}
-        >
-          Privacy
-          {activeTab === "privacy" && (
-            <div style={{ position: "absolute", bottom: 0, left: 0, width: "100%", height: "2px", background: "var(--primary)" }} />
-          )}
-        </button>
-        <button
-          onClick={() => setActiveTab("usage")}
-          style={{
-            padding: "10px 20px",
-            fontFamily: "'JetBrains Mono', monospace",
-            fontSize: "13px",
-            letterSpacing: "0.02em",
-            fontWeight: 500,
-            cursor: "pointer",
-            background: "transparent",
-            border: "none",
-            color: activeTab === "usage" ? "var(--primary)" : "var(--text-color-muted)",
-            position: "relative"
-          }}
-        >
-          Usage
-          {activeTab === "usage" && (
-            <div style={{ position: "absolute", bottom: 0, left: 0, width: "100%", height: "2px", background: "var(--primary)" }} />
-          )}
-        </button>
+      {/* Segmented Tabs Navigation Card */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "4px",
+          padding: "4px",
+          marginBottom: "24px",
+          borderRadius: "12px",
+          border: "1px solid var(--border-color)",
+          background: "var(--input-bg)"
+        }}
+      >
+        {(
+          [
+            { id: "api", label: "Configure API", icon: "key" },
+            { id: "model", label: "Model Settings", icon: "tune" },
+            { id: "privacy", label: "Privacy", icon: "shield" },
+            { id: "usage", label: "Usage", icon: "analytics" },
+          ] as const
+        ).map((tab) => {
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              style={{
+                flex: 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "8px",
+                padding: "8px 12px",
+                borderRadius: "8px",
+                fontSize: "13px",
+                fontWeight: isActive ? 600 : 500,
+                cursor: "pointer",
+                background: isActive ? "var(--bg-color)" : "transparent",
+                border: isActive ? "1px solid var(--border-color)" : "1px solid transparent",
+                color: isActive ? "var(--primary)" : "var(--text-color-muted)",
+                transition: "all 0.15s ease-in-out",
+                boxShadow: isActive ? "0 1px 3px rgba(0,0,0,0.05)" : "none"
+              }}
+            >
+              <Icon name={tab.icon} size={16} />
+              <span>{tab.label}</span>
+            </button>
+          );
+        })}
       </div>
 
       {formError && (
         <div
           style={{
-            marginBottom: "24px",
+            marginBottom: "20px",
             padding: "12px 16px",
-            borderRadius: "16px",
+            borderRadius: "12px",
             display: "flex",
             alignItems: "center",
             gap: "12px",
@@ -319,43 +286,59 @@ const SettingsView: React.FC = () => {
           }}
         >
           <Icon name="error" style={{ color: "#ba1a1a" }} />
-          <p style={{ flex: 1, fontSize: "15px", color: "#ba1a1a", margin: 0 }}>{formError}</p>
+          <p style={{ flex: 1, fontSize: "14px", color: "#ba1a1a", margin: 0 }}>{formError}</p>
         </div>
       )}
 
       {/* Tab Contents */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "24px" }}>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "20px" }}>
         {activeTab === "api" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-            {/* Add new key container */}
-            <div className="input-card" style={{ padding: "24px", borderRadius: "2rem" }}>
-              <h3 style={{ fontSize: "18px", fontWeight: 700, color: "var(--text-color)", margin: "0 0 16px 0" }}>
-                Add Gemini API Key
-              </h3>
-              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                    <label style={{ fontSize: "12px", fontFamily: "'JetBrains Mono', monospace", color: "var(--text-color-muted)" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+            {/* Add new key Card Section */}
+            <div
+              style={{
+                padding: "20px",
+                borderRadius: "16px",
+                border: "1px solid var(--border-color)",
+                background: "var(--input-bg)",
+                display: "flex",
+                flexDirection: "column",
+                gap: "16px"
+              }}
+            >
+              <div>
+                <h3 style={{ fontSize: "16px", fontWeight: 700, color: "var(--text-color)", margin: "0 0 4px 0" }}>
+                  Add Gemini API Key
+                </h3>
+                <p style={{ fontSize: "13px", color: "var(--text-color-muted)", margin: 0 }}>
+                  Keys are saved directly into your OS Keyring (Windows Credential Manager / macOS Keychain).
+                </p>
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                    <label style={{ fontSize: "11px", fontFamily: "'JetBrains Mono', monospace", color: "var(--text-color-muted)" }}>
                       KEY NAME / NICKNAME
                     </label>
                     <input
                       type="text"
                       value={newName}
                       onChange={(e) => setNewName(e.target.value)}
-                      placeholder="e.g. My Free Key"
+                      placeholder="e.g. My Primary Key"
                       style={{
-                        padding: "8px 16px",
-                        borderRadius: "12px",
+                        padding: "8px 12px",
+                        borderRadius: "8px",
                         border: "1px solid var(--border-color)",
-                        background: "var(--input-bg)",
+                        background: "var(--bg-color)",
                         color: "var(--text-color)",
-                        fontSize: "14px",
+                        fontSize: "13px",
                         outline: "none",
                       }}
                     />
                   </div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                    <label style={{ fontSize: "12px", fontFamily: "'JetBrains Mono', monospace", color: "var(--text-color-muted)" }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                    <label style={{ fontSize: "11px", fontFamily: "'JetBrains Mono', monospace", color: "var(--text-color-muted)" }}>
                       GEMINI API KEY
                     </label>
                     <input
@@ -364,51 +347,67 @@ const SettingsView: React.FC = () => {
                       onChange={(e) => setNewKey(e.target.value)}
                       placeholder="AIzaSy..."
                       style={{
-                        padding: "8px 16px",
-                        borderRadius: "12px",
+                        padding: "8px 12px",
+                        borderRadius: "8px",
                         border: "1px solid var(--border-color)",
-                        background: "var(--input-bg)",
+                        background: "var(--bg-color)",
                         color: "var(--text-color)",
-                        fontSize: "14px",
+                        fontSize: "13px",
                         fontFamily: "monospace",
                         outline: "none",
                       }}
                     />
                   </div>
                 </div>
-                <div style={{ display: "flex", justifyContent: "flex-end", paddingTop: "8px" }}>
+                <div style={{ display: "flex", justifyContent: "flex-end", paddingTop: "4px" }}>
                   <button
                     onClick={handleAddKey}
                     style={{
-                      padding: "10px 24px",
-                      borderRadius: "9999px",
+                      padding: "8px 18px",
+                      borderRadius: "8px",
                       fontWeight: 600,
-                      fontSize: "14px",
+                      fontSize: "13px",
                       background: "var(--primary)",
                       color: "white",
                       border: "none",
-                      cursor: "pointer"
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px"
                     }}
                   >
-                    Save to Secure Keyring
+                    <Icon name="save" size={16} />
+                    <span>Save Key</span>
                   </button>
                 </div>
               </div>
             </div>
 
-            {/* Keys list */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-              <h3 style={{ fontSize: "18px", fontWeight: 700, color: "var(--text-color)", margin: 0 }}>
-                Configured Key Identifiers ({apiKeys.length})
-              </h3>
-              <p style={{ fontSize: "14px", color: "var(--text-color-muted)", fontStyle: "italic", margin: 0 }}>
-                API keys are stored securely using your operating system's built-in credential manager (Windows Credential Manager / macOS Keychain). They are loaded directly into transient RAM only when executing prompts.
-              </p>
+            {/* Configured Keys Card Section */}
+            <div
+              style={{
+                padding: "20px",
+                borderRadius: "16px",
+                border: "1px solid var(--border-color)",
+                background: "var(--input-bg)",
+                display: "flex",
+                flexDirection: "column",
+                gap: "16px"
+              }}
+            >
+              <div>
+                <h3 style={{ fontSize: "16px", fontWeight: 700, color: "var(--text-color)", margin: "0 0 4px 0" }}>
+                  Configured Keys ({apiKeys.length})
+                </h3>
+                <p style={{ fontSize: "13px", color: "var(--text-color-muted)", margin: 0 }}>
+                  Reorder key priority or test credentials against active models.
+                </p>
+              </div>
 
-              <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "8px" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                 {apiKeys.length === 0 ? (
-                  <div style={{ textAlign: "center", padding: "40px 0", borderRadius: "16px", border: "1px solid var(--border-color)", background: "rgba(255,255,255,0.02)" }}>
-                    <p style={{ color: "var(--text-color-muted)", fontSize: "16px", margin: 0 }}>No keys configured yet.</p>
+                  <div style={{ textAlign: "center", padding: "28px 0", borderRadius: "12px", border: "1px dashed var(--border-color)", background: "var(--bg-color)" }}>
+                    <p style={{ color: "var(--text-color-muted)", fontSize: "14px", margin: 0 }}>No API keys configured yet.</p>
                   </div>
                 ) : (
                   apiKeys.map((key, idx) => {
@@ -424,15 +423,15 @@ const SettingsView: React.FC = () => {
                         style={{
                           display: "flex",
                           flexDirection: "column",
-                          padding: "16px",
-                          borderRadius: "16px",
+                          padding: "12px 14px",
+                          borderRadius: "12px",
                           border: "1px solid var(--border-color)",
-                          background: "var(--input-bg)",
+                          background: "var(--bg-color)",
                         }}
                       >
                         {isEditing ? (
-                          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+                          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                               <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
                                 <label style={{ fontSize: "11px", fontFamily: "'JetBrains Mono', monospace", color: "var(--text-color-muted)" }}>
                                   EDIT NICKNAME
@@ -441,51 +440,51 @@ const SettingsView: React.FC = () => {
                                   type="text"
                                   value={editName}
                                   onChange={(e) => setEditName(e.target.value)}
-                                  style={{ padding: "6px 12px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "var(--bg-color)", color: "var(--text-color)", fontSize: "14px" }}
+                                  style={{ padding: "6px 12px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "var(--input-bg)", color: "var(--text-color)", fontSize: "13px" }}
                                 />
                               </div>
                               <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
                                 <label style={{ fontSize: "11px", fontFamily: "'JetBrains Mono', monospace", color: "var(--text-color-muted)" }}>
-                                  REWRITE API KEY (LEAVE BLANK TO KEEP)
+                                  REWRITE KEY (OPTIONAL)
                                 </label>
                                 <input
                                   type="password"
                                   value={editKey}
                                   onChange={(e) => setEditKey(e.target.value)}
-                                  style={{ padding: "6px 12px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "var(--bg-color)", color: "var(--text-color)", fontSize: "14px" }}
+                                  style={{ padding: "6px 12px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "var(--input-bg)", color: "var(--text-color)", fontSize: "13px" }}
                                 />
                               </div>
                             </div>
                             <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
                               <button onClick={handleCancelEdit}
-                                style={{ padding: "6px 16px", borderRadius: "9999px", fontSize: "12px", fontWeight: 600, border: "1px solid var(--border-color)", background: "transparent", color: "var(--text-color-muted)", cursor: "pointer" }}>
+                                style={{ padding: "6px 14px", borderRadius: "6px", fontSize: "12px", fontWeight: 600, border: "1px solid var(--border-color)", background: "transparent", color: "var(--text-color-muted)", cursor: "pointer" }}>
                                 Cancel
                               </button>
                               <button onClick={() => handleUpdateKey(key.id)}
-                                style={{ padding: "6px 16px", borderRadius: "9999px", fontSize: "12px", fontWeight: 600, border: "none", background: "var(--primary)", color: "white", cursor: "pointer" }}>
+                                style={{ padding: "6px 14px", borderRadius: "6px", fontSize: "12px", fontWeight: 600, border: "none", background: "var(--primary)", color: "white", cursor: "pointer" }}>
                                 Save Changes
                               </button>
                             </div>
                           </div>
                         ) : (
                           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: "12px", minWidth: 0 }}>
-                              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "12px", color: "var(--text-color-muted)", width: "20px" }}>
-                                {idx + 1}
+                            <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0 }}>
+                              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "12px", color: "var(--text-color-muted)", width: "16px" }}>
+                                {idx + 1}.
                               </span>
                               <div style={{ minWidth: 0 }}>
-                                <p style={{ fontSize: "16px", fontWeight: 600, color: "var(--text-color)", margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                <p style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-color)", margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                                   {key.name}
                                 </p>
                                 <p style={{ fontSize: "11px", color: "var(--text-color-muted)", fontFamily: "'JetBrains Mono', monospace", margin: "2px 0 0 0" }}>
-                                  ID: {key.id}
+                                  ID: {key.id.slice(0, 8)}...
                                 </p>
                               </div>
                             </div>
 
-                            <div style={{ display: "flex", alignItems: "center", gap: "12px", flexShrink: 0 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
                               {/* Status badge */}
-                              <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "4px 12px", borderRadius: "9999px", background: "var(--bg-color)", border: "1px solid var(--border-color)" }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "3px 10px", borderRadius: "9999px", background: "var(--input-bg)", border: "1px solid var(--border-color)" }}>
                                 <span style={{ width: "6px", height: "6px", borderRadius: "9999px", background: cfg.dot }} />
                                 <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "10px", color: cfg.color, fontWeight: 500 }}>
                                   {cfg.label}
@@ -496,7 +495,7 @@ const SettingsView: React.FC = () => {
                               <button
                                 onClick={() => handleTestKey(key.id)}
                                 disabled={isT}
-                                style={{ padding: "4px 12px", borderRadius: "8px", fontSize: "11px", fontFamily: "'JetBrains Mono', monospace", border: "1px solid var(--border-color)", color: "var(--text-color-muted)", background: "transparent", cursor: isT ? "not-allowed" : "pointer", opacity: isT ? 0.4 : 1 }}
+                                style={{ padding: "4px 10px", borderRadius: "6px", fontSize: "11px", fontFamily: "'JetBrains Mono', monospace", border: "1px solid var(--border-color)", color: "var(--text-color-muted)", background: "transparent", cursor: isT ? "not-allowed" : "pointer", opacity: isT ? 0.4 : 1 }}
                               >
                                 {isT ? "Testing…" : "Test"}
                               </button>
@@ -508,11 +507,11 @@ const SettingsView: React.FC = () => {
                                 style={{
                                   background: "transparent", border: "none", cursor: idx === 0 ? "default" : "pointer",
                                   color: idx === 0 ? "var(--border-color)" : "var(--text-color-muted)",
-                                  display: "flex", alignItems: "center", justifyContent: "center"
+                                  display: "flex", alignItems: "center", justifyContent: "center", padding: "2px"
                                 }}
                                 title="Move Up"
                               >
-                                <Icon name="keyboard_arrow_up" size={20} />
+                                <Icon name="keyboard_arrow_up" size={18} />
                               </button>
 
                               {/* Move Down */}
@@ -522,33 +521,33 @@ const SettingsView: React.FC = () => {
                                 style={{
                                   background: "transparent", border: "none", cursor: idx === apiKeys.length - 1 ? "default" : "pointer",
                                   color: idx === apiKeys.length - 1 ? "var(--border-color)" : "var(--text-color-muted)",
-                                  display: "flex", alignItems: "center", justifyContent: "center"
+                                  display: "flex", alignItems: "center", justifyContent: "center", padding: "2px"
                                 }}
                                 title="Move Down"
                               >
-                                <Icon name="keyboard_arrow_down" size={20} />
+                                <Icon name="keyboard_arrow_down" size={18} />
                               </button>
 
-                              <div style={{ width: "1px", height: "16px", background: "var(--border-color)", margin: "0 4px" }} />
+                              <div style={{ width: "1px", height: "14px", background: "var(--border-color)", margin: "0 2px" }} />
 
                               {/* Edit */}
                               <button
                                 onClick={() => startEditing(key.id, key.name)}
-                                style={{ width: "32px", height: "32px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "8px", background: "transparent", border: "none", color: "var(--text-color-muted)", cursor: "pointer" }}
+                                style={{ width: "28px", height: "28px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "6px", background: "transparent", border: "none", color: "var(--text-color-muted)", cursor: "pointer" }}
                                 onMouseEnter={(e) => { e.currentTarget.style.background = "var(--input-bg)"; }}
                                 onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
                               >
-                                <Icon name="edit" size={18} />
+                                <Icon name="edit" size={16} />
                               </button>
 
                               {/* Remove */}
                               <button
                                 onClick={() => { if (confirm(`Remove key "${key.name}"?`)) removeApiKey(key.id); }}
-                                style={{ width: "32px", height: "32px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "8px", background: "transparent", border: "none", color: "var(--text-color-muted)", cursor: "pointer" }}
+                                style={{ width: "28px", height: "28px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "6px", background: "transparent", border: "none", color: "var(--text-color-muted)", cursor: "pointer" }}
                                 onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(186,26,26,0.1)"; e.currentTarget.style.color = "#ba1a1a"; }}
                                 onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-color-muted)"; }}
                               >
-                                <Icon name="delete" size={18} />
+                                <Icon name="delete" size={16} />
                               </button>
                             </div>
                           </div>
@@ -569,53 +568,53 @@ const SettingsView: React.FC = () => {
         )}
 
         {activeTab === "privacy" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-            {/* History toggle */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px", borderRadius: "16px", border: "1px solid var(--border-color)", background: "var(--input-bg)" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+            {/* History toggle Card */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 20px", borderRadius: "16px", border: "1px solid var(--border-color)", background: "var(--input-bg)" }}>
               <div>
-                <p style={{ fontSize: "18px", fontWeight: 700, color: "var(--text-color)", margin: "0 0 4px 0" }}>Save Chat History</p>
-                <p style={{ fontSize: "14px", color: "var(--text-color-muted)", margin: 0 }}>Store conversation sessions locally on this device</p>
+                <h3 style={{ fontSize: "16px", fontWeight: 700, color: "var(--text-color)", margin: "0 0 2px 0" }}>Save Chat History</h3>
+                <p style={{ fontSize: "13px", color: "var(--text-color-muted)", margin: 0 }}>Store conversation sessions locally on this machine</p>
               </div>
               <button
                 onClick={() => setHistoryEnabled(!historyEnabled)}
-                style={{ position: "relative", width: "48px", height: "24px", borderRadius: "9999px", background: historyEnabled ? "var(--primary)" : "var(--secondary)", border: "none", cursor: "pointer", transition: "background 0.3s" }}
+                style={{ position: "relative", width: "44px", height: "22px", borderRadius: "9999px", background: historyEnabled ? "var(--primary)" : "var(--secondary)", border: "none", cursor: "pointer", transition: "background 0.3s" }}
               >
                 <span
-                  style={{ position: "absolute", top: "4px", left: historyEnabled ? "28px" : "4px", width: "16px", height: "16px", background: "white", borderRadius: "9999px", transition: "left 0.3s" }}
+                  style={{ position: "absolute", top: "3px", left: historyEnabled ? "25px" : "3px", width: "16px", height: "16px", background: "white", borderRadius: "9999px", transition: "left 0.3s" }}
                 />
               </button>
             </div>
 
-            {/* Export */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "16px", padding: "20px", borderRadius: "16px", border: "1px solid var(--border-color)", background: "var(--input-bg)" }}>
+            {/* Export Card */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "14px", padding: "18px 20px", borderRadius: "16px", border: "1px solid var(--border-color)", background: "var(--input-bg)" }}>
               <div>
-                <p style={{ fontSize: "18px", fontWeight: 700, color: "var(--text-color)", margin: "0 0 4px 0" }}>Export Chat Data</p>
-                <p style={{ fontSize: "14px", color: "var(--text-color-muted)", margin: 0 }}>Download chat histories for backups or porting</p>
+                <h3 style={{ fontSize: "16px", fontWeight: 700, color: "var(--text-color)", margin: "0 0 2px 0" }}>Export Data</h3>
+                <p style={{ fontSize: "13px", color: "var(--text-color-muted)", margin: 0 }}>Download chat histories for backups or external porting ({sessions.length} sessions stored)</p>
               </div>
-              <p style={{ fontSize: "14px", color: "var(--text-color)", margin: 0 }}>{sessions.length} sessions stored</p>
-              <div style={{ display: "flex", gap: "12px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
                 {["JSON", "Markdown"].map((fmt) => (
                   <button
                     key={fmt}
                     onClick={fmt === "JSON" ? handleExportJSON : handleExportMd}
                     disabled={sessions.length === 0}
-                    style={{ flex: 1, padding: "10px", borderRadius: "12px", fontFamily: "'JetBrains Mono', monospace", fontSize: "12px", border: "1px solid var(--border-color)", color: "var(--text-color)", background: "var(--bg-color)", cursor: sessions.length === 0 ? "not-allowed" : "pointer", opacity: sessions.length === 0 ? 0.4 : 1 }}
+                    style={{ padding: "9px 14px", borderRadius: "8px", fontFamily: "'JetBrains Mono', monospace", fontSize: "12px", border: "1px solid var(--border-color)", color: "var(--text-color)", background: "var(--bg-color)", cursor: sessions.length === 0 ? "not-allowed" : "pointer", opacity: sessions.length === 0 ? 0.4 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}
                   >
-                    Export {fmt}
+                    <Icon name="download" size={16} />
+                    <span>Export {fmt}</span>
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Clear history */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "16px", padding: "20px", borderRadius: "16px", border: "1px solid rgba(186,26,26,0.15)", background: "rgba(249,218,214,0.20)" }}>
+            {/* Danger Zone Card */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px", padding: "18px 20px", borderRadius: "16px", border: "1px solid rgba(186,26,26,0.15)", background: "rgba(249,218,214,0.20)" }}>
               <div>
-                <p style={{ fontSize: "18px", fontWeight: 700, color: "#ba1a1a", margin: "0 0 4px 0" }}>Danger Zone</p>
-                <p style={{ fontSize: "14px", color: "#ba1a1a", opacity: 0.85, margin: 0 }}>Irreversibly delete all chat histories from this device</p>
+                <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#ba1a1a", margin: "0 0 2px 0" }}>Danger Zone</h3>
+                <p style={{ fontSize: "13px", color: "#ba1a1a", opacity: 0.85, margin: 0 }}>Irreversibly delete all stored chat sessions from this device</p>
               </div>
               <button
                 onClick={() => { if (confirm("Delete all history? This cannot be undone.")) clearAllSessions(); }}
-                style={{ width: "100%", padding: "10px", borderRadius: "12px", fontFamily: "'JetBrains Mono', monospace", fontSize: "12px", border: "1px solid rgba(186,26,26,0.25)", color: "#ba1a1a", background: "rgba(249,218,214,0.40)", cursor: "pointer" }}
+                style={{ width: "100%", padding: "9px", borderRadius: "8px", fontFamily: "'JetBrains Mono', monospace", fontSize: "12px", border: "1px solid rgba(186,26,26,0.25)", color: "#ba1a1a", background: "rgba(249,218,214,0.40)", cursor: "pointer", fontWeight: 600 }}
               >
                 Clear All History
               </button>
@@ -662,48 +661,48 @@ const SettingsView: React.FC = () => {
           }, {} as Record<string, { prompt: number; completion: number; total: number }>);
 
           return (
-            <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
               {/* Summary Cards */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "16px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px" }}>
                 {[
                   { label: "PROMPT TOKENS", value: totals.prompt, icon: "arrow_upward" },
                   { label: "COMPLETION TOKENS", value: totals.completion, icon: "arrow_downward" },
                   { label: "TOTAL TOKENS", value: totals.total, icon: "toll" },
                 ].map((card) => (
-                  <div key={card.label} className="input-card" style={{ padding: "20px", borderRadius: "1.5rem", display: "flex", alignItems: "center", gap: "16px" }}>
-                    <div style={{ width: "40px", height: "40px", borderRadius: "50%", background: "var(--tertiary-fixed)", color: "var(--tertiary)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>{card.icon}</span>
+                  <div key={card.label} style={{ padding: "16px", borderRadius: "14px", border: "1px solid var(--border-color)", background: "var(--input-bg)", display: "flex", alignItems: "center", gap: "12px" }}>
+                    <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: "var(--bg-color)", border: "1px solid var(--border-color)", color: "var(--primary)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Icon name={card.icon} size={18} />
                     </div>
                     <div>
-                      <div style={{ fontSize: "11px", fontFamily: "'JetBrains Mono', monospace", color: "var(--text-color-muted)" }}>{card.label}</div>
-                      <div style={{ fontSize: "22px", fontWeight: 700, color: "var(--text-color)", marginTop: "4px" }}>{card.value.toLocaleString()}</div>
+                      <div style={{ fontSize: "10px", fontFamily: "'JetBrains Mono', monospace", color: "var(--text-color-muted)" }}>{card.label}</div>
+                      <div style={{ fontSize: "18px", fontWeight: 700, color: "var(--text-color)", marginTop: "2px" }}>{card.value.toLocaleString()}</div>
                     </div>
                   </div>
                 ))}
               </div>
 
-              {/* Model Breakdown */}
-              <div className="input-card" style={{ padding: "24px", borderRadius: "2rem" }}>
-                <h3 style={{ fontSize: "18px", fontWeight: 700, color: "var(--text-color)", margin: "0 0 16px 0" }}>Usage by Model</h3>
+              {/* Model Breakdown Card */}
+              <div style={{ padding: "20px", borderRadius: "16px", border: "1px solid var(--border-color)", background: "var(--input-bg)" }}>
+                <h3 style={{ fontSize: "16px", fontWeight: 700, color: "var(--text-color)", margin: "0 0 12px 0" }}>Usage by Model</h3>
                 {Object.keys(modelStats).length === 0 ? (
-                  <p style={{ fontStyle: "italic", color: "var(--text-color-muted)", margin: 0 }}>No model usage recorded yet.</p>
+                  <p style={{ fontStyle: "italic", color: "var(--text-color-muted)", fontSize: "13px", margin: 0 }}>No model usage recorded yet.</p>
                 ) : (
-                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
                     <thead>
                       <tr style={{ borderBottom: "1px solid var(--border-color)", textAlign: "left" }}>
-                        <th style={{ padding: "10px 8px", color: "var(--text-color-muted)" }}>Model</th>
-                        <th style={{ padding: "10px 8px", color: "var(--text-color-muted)", textAlign: "right" }}>Prompt</th>
-                        <th style={{ padding: "10px 8px", color: "var(--text-color-muted)", textAlign: "right" }}>Completion</th>
-                        <th style={{ padding: "10px 8px", color: "var(--text-color-muted)", textAlign: "right" }}>Total</th>
+                        <th style={{ padding: "8px", color: "var(--text-color-muted)", fontWeight: 500 }}>Model</th>
+                        <th style={{ padding: "8px", color: "var(--text-color-muted)", fontWeight: 500, textAlign: "right" }}>Prompt</th>
+                        <th style={{ padding: "8px", color: "var(--text-color-muted)", fontWeight: 500, textAlign: "right" }}>Completion</th>
+                        <th style={{ padding: "8px", color: "var(--text-color-muted)", fontWeight: 500, textAlign: "right" }}>Total</th>
                       </tr>
                     </thead>
                     <tbody>
                       {Object.entries(modelStats).map(([model, s]) => (
-                        <tr key={model} style={{ borderBottom: "1px solid rgba(213,205,197,0.15)" }}>
-                          <td style={{ padding: "12px 8px", fontWeight: 600, color: "var(--text-color)" }}>{model}</td>
-                          <td style={{ padding: "12px 8px", color: "var(--text-color-muted)", textAlign: "right" }}>{s.prompt.toLocaleString()}</td>
-                          <td style={{ padding: "12px 8px", color: "var(--text-color-muted)", textAlign: "right" }}>{s.completion.toLocaleString()}</td>
-                          <td style={{ padding: "12px 8px", color: "var(--primary)", fontWeight: 700, textAlign: "right" }}>{s.total.toLocaleString()}</td>
+                        <tr key={model} style={{ borderBottom: "1px solid var(--border-color)" }}>
+                          <td style={{ padding: "8px", fontWeight: 600, color: "var(--text-color)" }}>{model}</td>
+                          <td style={{ padding: "8px", color: "var(--text-color-muted)", textAlign: "right" }}>{s.prompt.toLocaleString()}</td>
+                          <td style={{ padding: "8px", color: "var(--text-color-muted)", textAlign: "right" }}>{s.completion.toLocaleString()}</td>
+                          <td style={{ padding: "8px", color: "var(--primary)", fontWeight: 700, textAlign: "right" }}>{s.total.toLocaleString()}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -711,30 +710,30 @@ const SettingsView: React.FC = () => {
                 )}
               </div>
 
-              {/* Day Breakdown */}
-              <div className="input-card" style={{ padding: "24px", borderRadius: "2rem" }}>
-                <h3 style={{ fontSize: "18px", fontWeight: 700, color: "var(--text-color)", margin: "0 0 16px 0" }}>Usage by Day</h3>
+              {/* Day Breakdown Card */}
+              <div style={{ padding: "20px", borderRadius: "16px", border: "1px solid var(--border-color)", background: "var(--input-bg)" }}>
+                <h3 style={{ fontSize: "16px", fontWeight: 700, color: "var(--text-color)", margin: "0 0 12px 0" }}>Usage by Day</h3>
                 {Object.keys(dayStats).length === 0 ? (
-                  <p style={{ fontStyle: "italic", color: "var(--text-color-muted)", margin: 0 }}>No daily usage recorded yet.</p>
+                  <p style={{ fontStyle: "italic", color: "var(--text-color-muted)", fontSize: "13px", margin: 0 }}>No daily usage recorded yet.</p>
                 ) : (
-                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
                     <thead>
                       <tr style={{ borderBottom: "1px solid var(--border-color)", textAlign: "left" }}>
-                        <th style={{ padding: "10px 8px", color: "var(--text-color-muted)" }}>Date</th>
-                        <th style={{ padding: "10px 8px", color: "var(--text-color-muted)", textAlign: "right" }}>Prompt</th>
-                        <th style={{ padding: "10px 8px", color: "var(--text-color-muted)", textAlign: "right" }}>Completion</th>
-                        <th style={{ padding: "10px 8px", color: "var(--text-color-muted)", textAlign: "right" }}>Total</th>
+                        <th style={{ padding: "8px", color: "var(--text-color-muted)", fontWeight: 500 }}>Date</th>
+                        <th style={{ padding: "8px", color: "var(--text-color-muted)", fontWeight: 500, textAlign: "right" }}>Prompt</th>
+                        <th style={{ padding: "8px", color: "var(--text-color-muted)", fontWeight: 500, textAlign: "right" }}>Completion</th>
+                        <th style={{ padding: "8px", color: "var(--text-color-muted)", fontWeight: 500, textAlign: "right" }}>Total</th>
                       </tr>
                     </thead>
                     <tbody>
                       {Object.entries(dayStats)
                         .sort((a, b) => new Date(b[0]).getTime() - new Date(a[0]).getTime())
                         .map(([day, s]) => (
-                        <tr key={day} style={{ borderBottom: "1px solid rgba(213,205,197,0.15)" }}>
-                          <td style={{ padding: "12px 8px", fontWeight: 600, color: "var(--text-color)" }}>{day}</td>
-                          <td style={{ padding: "12px 8px", color: "var(--text-color-muted)", textAlign: "right" }}>{s.prompt.toLocaleString()}</td>
-                          <td style={{ padding: "12px 8px", color: "var(--text-color-muted)", textAlign: "right" }}>{s.completion.toLocaleString()}</td>
-                          <td style={{ padding: "12px 8px", color: "var(--primary)", fontWeight: 700, textAlign: "right" }}>{s.total.toLocaleString()}</td>
+                        <tr key={day} style={{ borderBottom: "1px solid var(--border-color)" }}>
+                          <td style={{ padding: "8px", fontWeight: 600, color: "var(--text-color)" }}>{day}</td>
+                          <td style={{ padding: "8px", color: "var(--text-color-muted)", textAlign: "right" }}>{s.prompt.toLocaleString()}</td>
+                          <td style={{ padding: "8px", color: "var(--text-color-muted)", textAlign: "right" }}>{s.completion.toLocaleString()}</td>
+                          <td style={{ padding: "8px", color: "var(--primary)", fontWeight: 700, textAlign: "right" }}>{s.total.toLocaleString()}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -742,28 +741,28 @@ const SettingsView: React.FC = () => {
                 )}
               </div>
 
-              {/* API Key Breakdown */}
-              <div className="input-card" style={{ padding: "24px", borderRadius: "2rem" }}>
-                <h3 style={{ fontSize: "18px", fontWeight: 700, color: "var(--text-color)", margin: "0 0 16px 0" }}>Usage by API Key</h3>
+              {/* API Key Breakdown Card */}
+              <div style={{ padding: "20px", borderRadius: "16px", border: "1px solid var(--border-color)", background: "var(--input-bg)" }}>
+                <h3 style={{ fontSize: "16px", fontWeight: 700, color: "var(--text-color)", margin: "0 0 12px 0" }}>Usage by API Key</h3>
                 {Object.keys(keyStats).length === 0 ? (
-                  <p style={{ fontStyle: "italic", color: "var(--text-color-muted)", margin: 0 }}>No API key usage recorded yet.</p>
+                  <p style={{ fontStyle: "italic", color: "var(--text-color-muted)", fontSize: "13px", margin: 0 }}>No API key usage recorded yet.</p>
                 ) : (
-                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
                     <thead>
                       <tr style={{ borderBottom: "1px solid var(--border-color)", textAlign: "left" }}>
-                        <th style={{ padding: "10px 8px", color: "var(--text-color-muted)" }}>API Key</th>
-                        <th style={{ padding: "10px 8px", color: "var(--text-color-muted)", textAlign: "right" }}>Prompt</th>
-                        <th style={{ padding: "10px 8px", color: "var(--text-color-muted)", textAlign: "right" }}>Completion</th>
-                        <th style={{ padding: "10px 8px", color: "var(--text-color-muted)", textAlign: "right" }}>Total</th>
+                        <th style={{ padding: "8px", color: "var(--text-color-muted)", fontWeight: 500 }}>API Key</th>
+                        <th style={{ padding: "8px", color: "var(--text-color-muted)", fontWeight: 500, textAlign: "right" }}>Prompt</th>
+                        <th style={{ padding: "8px", color: "var(--text-color-muted)", fontWeight: 500, textAlign: "right" }}>Completion</th>
+                        <th style={{ padding: "8px", color: "var(--text-color-muted)", fontWeight: 500, textAlign: "right" }}>Total</th>
                       </tr>
                     </thead>
                     <tbody>
                       {Object.entries(keyStats).map(([keyName, s]) => (
-                        <tr key={keyName} style={{ borderBottom: "1px solid rgba(213,205,197,0.15)" }}>
-                          <td style={{ padding: "12px 8px", fontWeight: 600, color: "var(--text-color)" }}>{keyName}</td>
-                          <td style={{ padding: "12px 8px", color: "var(--text-color-muted)", textAlign: "right" }}>{s.prompt.toLocaleString()}</td>
-                          <td style={{ padding: "12px 8px", color: "var(--text-color-muted)", textAlign: "right" }}>{s.completion.toLocaleString()}</td>
-                          <td style={{ padding: "12px 8px", color: "var(--primary)", fontWeight: 700, textAlign: "right" }}>{s.total.toLocaleString()}</td>
+                        <tr key={keyName} style={{ borderBottom: "1px solid var(--border-color)" }}>
+                          <td style={{ padding: "8px", fontWeight: 600, color: "var(--text-color)" }}>{keyName}</td>
+                          <td style={{ padding: "8px", color: "var(--text-color-muted)", textAlign: "right" }}>{s.prompt.toLocaleString()}</td>
+                          <td style={{ padding: "8px", color: "var(--text-color-muted)", textAlign: "right" }}>{s.completion.toLocaleString()}</td>
+                          <td style={{ padding: "8px", color: "var(--primary)", fontWeight: 700, textAlign: "right" }}>{s.total.toLocaleString()}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -771,15 +770,15 @@ const SettingsView: React.FC = () => {
                 )}
               </div>
 
-              {/* Reset Usage */}
-              <div style={{ display: "flex", flexDirection: "column", gap: "16px", padding: "20px", borderRadius: "16px", border: "1px solid rgba(186,26,26,0.15)", background: "rgba(249,218,214,0.20)" }}>
+              {/* Reset Usage Card */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "12px", padding: "18px 20px", borderRadius: "16px", border: "1px solid rgba(186,26,26,0.15)", background: "rgba(249,218,214,0.20)" }}>
                 <div>
-                  <p style={{ fontSize: "18px", fontWeight: 700, color: "#ba1a1a", margin: "0 0 4px 0" }}>Danger Zone</p>
-                  <p style={{ fontSize: "14px", color: "#ba1a1a", opacity: 0.85, margin: 0 }}>Reset all token usage records. This cannot be undone.</p>
+                  <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#ba1a1a", margin: "0 0 2px 0" }}>Reset Stats</h3>
+                  <p style={{ fontSize: "13px", color: "#ba1a1a", opacity: 0.85, margin: 0 }}>Reset all local token usage records. This action cannot be undone.</p>
                 </div>
                 <button
                   onClick={() => { if (confirm("Clear all token usage records?")) clearUsageRecords(); }}
-                  style={{ width: "100%", padding: "10px", borderRadius: "12px", fontFamily: "'JetBrains Mono', monospace", fontSize: "12px", border: "1px solid rgba(186,26,26,0.25)", color: "#ba1a1a", background: "rgba(249,218,214,0.40)", cursor: "pointer" }}
+                  style={{ width: "100%", padding: "9px", borderRadius: "8px", fontFamily: "'JetBrains Mono', monospace", fontSize: "12px", border: "1px solid rgba(186,26,26,0.25)", color: "#ba1a1a", background: "rgba(249,218,214,0.40)", cursor: "pointer", fontWeight: 600 }}
                 >
                   Reset Usage Stats
                 </button>
