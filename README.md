@@ -16,7 +16,7 @@
 - **Auto-Focus Chat Input** — Continuous focus management ensuring the prompt textarea automatically regains focus after the AI responds.
 - **Native Keyboard Shortcuts** — Full cross-platform keyboard shortcut support (Windows & macOS) for quick navigation, sending messages, and controlling sessions.
 - **HTML Artifact Generation & Auto-Download** — Automatically generate HTML files/artifacts with instant client-side download triggers.
-- **Embedded Gemini Web App Launcher** — Quick access launcher to open the official Google Gemini Web App (`https://gemini.google.com/`) in a dedicated, secure Tauri web view window.
+- **Google AI Studio Quick Link** — Dedicated `API` dock button to open Google AI Studio (`https://aistudio.google.com/`) directly in your browser for fast API key retrieval.
 - **Secure OS Keyring Integration** — API keys are stored securely using your operating system's native credential manager.
 - **Seamless Dark & Light Themes** — Modern color-scheme aware theme engine with full dark mode support, glassmorphism panels, and customized native dropdown menus.
 - **Audio Upload & Speech Transcription** — Upload audio files (MP3, WAV, M4A, OGG, AAC, WEBP audio) for automated AI audio transcription, translation, and analysis.
@@ -51,8 +51,8 @@
 
 ```bash
 # Step 1: Clone the repository
-git clone https://github.com/RhythmicDias/Apkirota.git
-cd Apkirota
+git clone https://github.com/RhythmicDias/KeyLooper.git
+cd KeyLooper
 
 # Step 2: Install dependencies
 npm install
