@@ -88,6 +88,44 @@ export interface Skill {
   updatedAt: number;
 }
 
+export const DEFAULT_SKILLS: Skill[] = [
+  {
+    id: "skill-docx-assistant",
+    name: "DOCX Assistant",
+    systemPrompt: "You are an expert document generator and DOCX assistant. Format, write, and structure documents, reports, templates, and clinical letters with clean headings, tables, bullet points, and professional formatting ready for export to Word (.docx).",
+    createdAt: 1720600000000,
+    updatedAt: 1720600000000,
+  },
+  {
+    id: "skill-appointment-list-maker",
+    name: "Appointment List Maker",
+    systemPrompt: "You are a clinical scheduling and appointment list assistant. Organize, format, and parse patient schedules, clinic appointments, consultation times, and follow-up lists into clean, structured tables with dates, times, patient details, and action items.",
+    createdAt: 1720600000000,
+    updatedAt: 1720600000000,
+  },
+  {
+    id: "default-code-architect",
+    name: "Code Architect",
+    systemPrompt: "You are an expert software engineer and code architect. Provide clean, modular, efficient code solutions following SOLID principles.",
+    createdAt: 1721860000000,
+    updatedAt: 1721860000000,
+  },
+  {
+    id: "default-medical-summarizer",
+    name: "Pediatric & Medical Summarizer",
+    systemPrompt: "You are a clinical documentation assistant. Summarize medical information concisely with high precision, clear headings, and evidence-based clinical context.",
+    createdAt: 1721860000000,
+    updatedAt: 1721860000000,
+  },
+  {
+    id: "default-creative-writer",
+    name: "Creative Content Specialist",
+    systemPrompt: "You are an engaging creative writer. Craft polished, compelling content tailored to the audience's tone and requirements.",
+    createdAt: 1721860000000,
+    updatedAt: 1721860000000,
+  },
+];
+
 export interface UsageRecord {
   id: string;
   apiKeyId: string;
@@ -112,13 +150,16 @@ interface AppState {
   mode: AppMode;
   setMode: (mode: AppMode) => void;
 
-  // Model configs
+  // Models
   modelConfigs: Record<string, ModelConfig>;
   updateModelConfig: (model: string, config: Partial<ModelConfig>) => void;
+  customModels: string[];
+  addCustomModel: (model: string) => void;
+  removeCustomModel: (model: string) => void;
 
   // Selected Model
-  selectedModel: GeminiModel;
-  setModel: (model: GeminiModel) => void;
+  selectedModel: string;
+  setModel: (model: string) => void;
 
   // Sessions
   sessions: ChatSession[];
@@ -216,6 +257,18 @@ export const useAppStore = create<AppState>()(
               ...config,
             },
           },
+        })),
+      customModels: [],
+      addCustomModel: (model) => {
+        const trimmed = model.trim();
+        if (!trimmed) return;
+        set((s) => ({
+          customModels: s.customModels.includes(trimmed) ? s.customModels : [...s.customModels, trimmed],
+        }));
+      },
+      removeCustomModel: (model) =>
+        set((s) => ({
+          customModels: s.customModels.filter((m) => m !== model),
         })),
       selectedModel: "gemini-2.5-flash",
       setModel: (model) => set({ selectedModel: model }),
@@ -346,7 +399,7 @@ export const useAppStore = create<AppState>()(
         })),
 
       // ── Skills ────────────────────────────────────────────────────────────
-      skills: [],
+      skills: DEFAULT_SKILLS,
       createSkill: (name, systemPrompt) => {
         const id = uuidv4();
         const now = Date.now();
@@ -396,6 +449,37 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: "apkirota-storage",
+      merge: (persistedState: any, currentState) => {
+        try {
+          const merged = { ...currentState, ...(persistedState as object) };
+          const existingSkills = Array.isArray(merged.skills) ? merged.skills : [];
+          const existingNames = new Set(
+            existingSkills
+              .filter((s) => s && typeof s.name === "string")
+              .map((s: Skill) => s.name.toLowerCase())
+          );
+          const existingIds = new Set(
+            existingSkills
+              .filter((s) => s && typeof s.id === "string")
+              .map((s: Skill) => s.id)
+          );
+
+          const skillsToKeep = [...existingSkills];
+          for (const defSkill of DEFAULT_SKILLS) {
+            if (!existingNames.has(defSkill.name.toLowerCase()) && !existingIds.has(defSkill.id)) {
+              skillsToKeep.push(defSkill);
+            }
+          }
+          merged.skills = skillsToKeep;
+          if (!merged.selectedModel || typeof merged.selectedModel !== "string") {
+            merged.selectedModel = "gemini-2.5-flash";
+          }
+          return merged;
+        } catch (err) {
+          console.error("Storage rehydration merge error:", err);
+          return currentState;
+        }
+      },
       partialize: (state) => {
         // Strip Base64 inlineData from messages before persisting to disk.
         // This prevents large files (images, audio) from leaking as plaintext.
@@ -426,6 +510,7 @@ export const useAppStore = create<AppState>()(
           sessions: state.historyEnabled ? sanitizeSessions(state.sessions) : [],
           activeSessionId: state.historyEnabled ? state.activeSessionId : null,
           skills: state.skills,
+          customModels: state.customModels || [],
           historyEnabled: state.historyEnabled,
           theme: state.theme,
           usageRecords: state.usageRecords,
@@ -438,6 +523,20 @@ export const useAppStore = create<AppState>()(
 );
 
 // ─── Selectors ────────────────────────────────────────────────────────────────
+
+let cachedCustomModels: string[] | undefined;
+let cachedAvailableModels: string[] = [...SUPPORTED_MODELS];
+
+export const selectAvailableModels = (s: AppState): string[] => {
+  if (s.customModels !== cachedCustomModels) {
+    cachedCustomModels = s.customModels;
+    cachedAvailableModels = [
+      ...SUPPORTED_MODELS,
+      ...(s.customModels || []),
+    ];
+  }
+  return cachedAvailableModels;
+};
 
 export const selectActiveSession = (s: AppState): ChatSession | null =>
   s.sessions.find((sess) => sess.id === s.activeSessionId) ?? null;

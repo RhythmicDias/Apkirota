@@ -6,7 +6,7 @@
 import React, { useRef, useState, useCallback } from "react";
 import { processFile, getPreviewUrl } from "../lib/fileProcessor";
 import type { ChatPart } from "../lib/geminiClient";
-import { useAppStore, SUPPORTED_MODELS } from "../store/useAppStore";
+import { useAppStore, selectAvailableModels } from "../store/useAppStore";
 
 interface AttachedFile {
   file: File;
@@ -30,11 +30,63 @@ const InputPanel: React.FC<InputPanelProps> = ({
   const [attachments, setAttachments] = useState<AttachedFile[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
   const [isAttaching, setIsAttaching] = useState(false);
+  const [isListening, setIsListening] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const recognitionRef = useRef<any>(null);
 
   const selectedModel = useAppStore((s) => s.selectedModel);
   const setModel = useAppStore((s) => s.setModel);
+  const availableModels = useAppStore(selectAvailableModels);
+
+  const toggleListening = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Speech recognition is not supported in this environment.");
+      return;
+    }
+
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = false;
+      recognition.lang = "en-US";
+
+      recognition.onresult = (event: any) => {
+        let transcript = "";
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          if (event.results[i].isFinal) {
+            transcript += event.results[i][0].transcript;
+          }
+        }
+        if (transcript.trim()) {
+          setText((prev) => (prev ? `${prev.trim()} ${transcript.trim()}` : transcript.trim()));
+        }
+      };
+
+      recognition.onerror = (event: any) => {
+        console.error("Speech recognition error:", event.error);
+        setIsListening(false);
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognition.start();
+      recognitionRef.current = recognition;
+      setIsListening(true);
+    } catch (e) {
+      console.error(e);
+      setIsListening(false);
+    }
+  };
 
   const handleAttach = useCallback(async (files: FileList | File[]) => {
     setIsAttaching(true);
@@ -166,7 +218,7 @@ const InputPanel: React.FC<InputPanelProps> = ({
 
         {/* Bottom toolbar */}
         <div className="flex items-center justify-between px-4 pb-3 pt-1">
-          {/* Left: attach button */}
+          {/* Left: attach button & microphone dictation */}
           <div className="flex items-center gap-2">
             <button
               onClick={() => fileInputRef.current?.click()}
@@ -186,6 +238,21 @@ const InputPanel: React.FC<InputPanelProps> = ({
               )}
             </button>
 
+            <button
+              type="button"
+              onClick={toggleListening}
+              className={`flex items-center justify-center w-8 h-8 rounded-lg transition-all ${
+                isListening
+                  ? "bg-[#ba1a1a] text-white animate-pulse shadow-md"
+                  : "text-[#7DA0CA]/60 hover:text-[#C1E8FF] hover:bg-[#5483B3]/15"
+              }`}
+              title={isListening ? "Stop voice dictation" : "Start voice dictation"}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>
+                {isListening ? "mic_off" : "mic"}
+              </span>
+            </button>
+
             <input
               ref={fileInputRef}
               type="file"
@@ -202,10 +269,10 @@ const InputPanel: React.FC<InputPanelProps> = ({
             <div className="relative">
               <select
                 value={selectedModel}
-                onChange={(e) => setModel(e.target.value as typeof selectedModel)}
+                onChange={(e) => setModel(e.target.value)}
                 className="appearance-none pl-2.5 pr-6 py-1 rounded-lg bg-transparent border border-[#5483B3]/20 text-[#7DA0CA] text-[11.5px] focus:outline-none cursor-pointer hover:border-[#5483B3]/40 transition-colors"
               >
-                {SUPPORTED_MODELS.map((m) => (
+                {availableModels.map((m) => (
                   <option key={m} value={m} className="bg-[#021024] text-[#C1E8FF]">
                     {m.replace("gemini-", "").replace("-", " ")}
                   </option>

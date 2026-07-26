@@ -1,5 +1,5 @@
-import React from "react";
-import { useAppStore, ModelConfig, SUPPORTED_MODELS, GeminiModel } from "../store/useAppStore";
+import React, { useState } from "react";
+import { useAppStore, ModelConfig, selectAvailableModels } from "../store/useAppStore";
 
 const Toggle: React.FC<{ checked: boolean; onChange: (v: boolean) => void }> = ({ checked, onChange }) => (
   <button
@@ -26,6 +26,20 @@ export const ModelConfigPanel: React.FC = () => {
   const setModel = useAppStore((s) => s.setModel);
   const modelConfigs = useAppStore((s) => s.modelConfigs);
   const updateModelConfig = useAppStore((s) => s.updateModelConfig);
+  const availableModels = useAppStore(selectAvailableModels);
+  const customModels = useAppStore((s) => s.customModels);
+  const addCustomModel = useAppStore((s) => s.addCustomModel);
+  const removeCustomModel = useAppStore((s) => s.removeCustomModel);
+
+  const [newModelInput, setNewModelInput] = useState("");
+
+  const handleAddCustomModel = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newModelInput.trim()) return;
+    addCustomModel(newModelInput.trim());
+    setModel(newModelInput.trim());
+    setNewModelInput("");
+  };
 
   const config = modelConfigs[selectedModel] || {
     systemInstructions: "",
@@ -56,18 +70,61 @@ export const ModelConfigPanel: React.FC = () => {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "24px", paddingBottom: "40px" }} className="fade-in">
+      {/* Custom Model Addition Card */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "12px", padding: "16px", background: "var(--input-bg)", borderRadius: "12px", border: "1px solid var(--border-color)" }}>
+        <h3 style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-color)", margin: 0, display: "flex", alignItems: "center", gap: "6px" }}>
+          <span className="material-symbols-outlined" style={{ fontSize: "18px", color: "var(--primary)" }}>add_circle</span>
+          Add Custom Gemini Model
+        </h3>
+        <form onSubmit={handleAddCustomModel} style={{ display: "flex", gap: "8px" }}>
+          <input
+            type="text"
+            placeholder="e.g. gemini-3.5-pro or gemini-experimental"
+            value={newModelInput}
+            onChange={(e) => setNewModelInput(e.target.value)}
+            style={{
+              flex: 1, padding: "10px 14px", borderRadius: "8px", border: "1px solid var(--border-color)",
+              background: "var(--bg-color)", color: "var(--text-color)", fontSize: "13px", outline: "none"
+            }}
+          />
+          <button
+            type="submit"
+            disabled={!newModelInput.trim()}
+            style={{
+              padding: "10px 16px", background: "var(--primary)", color: "white", borderRadius: "8px",
+              fontSize: "13px", fontWeight: 600, border: "none", cursor: newModelInput.trim() ? "pointer" : "not-allowed",
+              opacity: newModelInput.trim() ? 1 : 0.5
+            }}
+          >
+            Add Model
+          </button>
+        </form>
+        {customModels.length > 0 && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginTop: "4px" }}>
+            {customModels.map((cm) => (
+              <span key={cm} style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "4px 10px", borderRadius: "16px", background: "var(--bg-color)", border: "1px solid var(--border-color)", fontSize: "12px", color: "var(--text-color)" }}>
+                {cm}
+                <button type="button" onClick={() => removeCustomModel(cm)} style={{ border: "none", background: "none", color: "#ba1a1a", cursor: "pointer", display: "flex", padding: 0 }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>close</span>
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+
       <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
         <h3 style={{ fontSize: "16px", fontWeight: 600, color: "var(--text-color)", margin: 0 }}>Active Model</h3>
         <select
           value={selectedModel}
-          onChange={(e) => setModel(e.target.value as GeminiModel)}
+          onChange={(e) => setModel(e.target.value)}
           style={{
             padding: "12px", borderRadius: "12px", border: "1px solid var(--border-color)",
             background: "var(--input-bg)", color: "var(--text-color)", fontSize: "14px", outline: "none",
             width: "100%"
           }}
         >
-          {SUPPORTED_MODELS.map((m) => (
+          {availableModels.map((m) => (
             <option key={m} value={m}>{m}</option>
           ))}
         </select>
@@ -196,3 +253,5 @@ export const ModelConfigPanel: React.FC = () => {
     </div>
   );
 };
+
+export default ModelConfigPanel;

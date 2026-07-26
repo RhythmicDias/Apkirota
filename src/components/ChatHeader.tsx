@@ -4,13 +4,14 @@
  */
 
 import React from "react";
-import { useAppStore, SUPPORTED_MODELS, selectHealthyKeyCount, selectActiveSession } from "../store/useAppStore";
+import { useAppStore, selectHealthyKeyCount, selectActiveSession, selectAvailableModels } from "../store/useAppStore";
 
 const ChatHeader: React.FC = () => {
   const mode = useAppStore((s) => s.mode);
   const setMode = useAppStore((s) => s.setMode);
   const selectedModel = useAppStore((s) => s.selectedModel);
   const setModel = useAppStore((s) => s.setModel);
+  const availableModels = useAppStore(selectAvailableModels);
   const totalKeys = useAppStore((s) => s.apiKeys.length);
   const healthyKeys = useAppStore(selectHealthyKeyCount);
   const activeSession = useAppStore(selectActiveSession);
@@ -68,10 +69,10 @@ const ChatHeader: React.FC = () => {
         <div className="relative">
           <select
             value={selectedModel}
-            onChange={(e) => setModel(e.target.value as typeof selectedModel)}
+            onChange={(e) => setModel(e.target.value)}
             className="appearance-none pl-3 pr-7 py-1.5 rounded-lg bg-[#052659]/60 border border-[#5483B3]/20 text-[#C1E8FF]/70 text-[11.5px] focus:outline-none cursor-pointer hover:border-[#5483B3]/40 transition-colors"
           >
-            {SUPPORTED_MODELS.map((m) => (
+            {availableModels.map((m) => (
               <option key={m} value={m} className="bg-[#021024]">{m}</option>
             ))}
           </select>

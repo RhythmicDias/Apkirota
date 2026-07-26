@@ -17,7 +17,7 @@ import SkillsView from "./components/SkillsView";
 import TitleBar from "./components/TitleBar";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import { useAppStore, selectActiveSession, SUPPORTED_MODELS } from "./store/useAppStore";
+import { useAppStore, selectActiveSession, selectAvailableModels } from "./store/useAppStore";
 import { KeyRotator } from "./lib/KeyRotator";
 import { sendMessage, uploadFileToGemini } from "./lib/geminiClient";
 import type { ChatPart } from "./lib/geminiClient";
@@ -144,6 +144,7 @@ const App: React.FC = () => {
   const updateMessageMetadata = useAppStore((s) => s.updateMessageMetadata);
   const removeSubsequentMessages = useAppStore((s) => s.removeSubsequentMessages);
   const skills = useAppStore((s) => s.skills);
+  const availableModels = useAppStore(selectAvailableModels);
 
   const activeSkill = activeSession?.skillId ? skills.find(s => s.id === activeSession.skillId) : null;
 
@@ -163,10 +164,15 @@ const App: React.FC = () => {
   useEffect(() => {
     let unlistenFn: (() => void) | undefined;
     const setupTrayListener = async () => {
-      const unlisten = await listen("open-settings", () => {
-        setView("settings");
-      });
-      return unlisten;
+      try {
+        const unlisten = await listen("open-settings", () => {
+          setView("settings");
+        });
+        return unlisten;
+      } catch {
+        // Tauri internals not ready (e.g. during dev HMR reload) — skip silently
+        return undefined;
+      }
     };
     setupTrayListener().then((fn) => { unlistenFn = fn; });
     return () => {
@@ -174,43 +180,50 @@ const App: React.FC = () => {
     };
   }, [setView]);
 
-  useEffect(() => {
-    // @ts-ignore
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (SpeechRecognition) {
-      const recognition = new SpeechRecognition();
-      recognition.continuous = true;
-      recognition.interimResults = true;
-      recognition.lang = 'en-US';
-
-      recognition.onstart = () => setIsRecording(true);
-      recognition.onend = () => setIsRecording(false);
-      recognition.onerror = (e: any) => { console.error("Speech recognition error:", e); setIsRecording(false); };
-      
-      recognition.onresult = (e: any) => {
-        let finalSegment = "";
-        for (let i = e.resultIndex; i < e.results.length; ++i) {
-          if (e.results[i].isFinal) {
-            finalSegment += e.results[i][0].transcript;
-          }
-        }
-        if (finalSegment) {
-          setText((prev) => prev + (prev && !prev.endsWith(" ") ? " " : "") + finalSegment);
-        }
-      };
-      recognitionRef.current = recognition;
-    }
-  }, []);
-
   const toggleRecording = () => {
-    if (!recognitionRef.current) {
-      setLocalError("Speech recognition is not supported in this browser environment.");
-      return;
-    }
-    if (isRecording) {
-      recognitionRef.current.stop();
-    } else {
-      recognitionRef.current.start();
+    try {
+      // @ts-ignore
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        setLocalError("Speech recognition is not supported in this browser environment.");
+        return;
+      }
+      if (isRecording) {
+        recognitionRef.current?.stop();
+        setIsRecording(false);
+      } else {
+        if (!recognitionRef.current) {
+          const recognition = new SpeechRecognition();
+          recognition.continuous = true;
+          recognition.interimResults = true;
+          recognition.lang = 'en-US';
+
+          recognition.onstart = () => setIsRecording(true);
+          recognition.onend = () => setIsRecording(false);
+          recognition.onerror = (e: any) => {
+            console.error("Speech recognition error:", e);
+            setIsRecording(false);
+          };
+          recognition.onresult = (e: any) => {
+            let finalSegment = "";
+            for (let i = e.resultIndex; i < e.results.length; ++i) {
+              if (e.results[i].isFinal) {
+                finalSegment += e.results[i][0].transcript;
+              }
+            }
+            if (finalSegment) {
+              setText((prev) => prev + (prev && !prev.endsWith(" ") ? " " : "") + finalSegment);
+            }
+          };
+          recognitionRef.current = recognition;
+        }
+        recognitionRef.current.start();
+        setIsRecording(true);
+      }
+    } catch (err) {
+      console.error("Failed to start speech recognition:", err);
+      setIsRecording(false);
+      setLocalError("Speech recognition could not be started in this environment.");
     }
   };
 
@@ -717,13 +730,13 @@ const App: React.FC = () => {
                       </span>
                       <select
                         value={selectedModel}
-                        onChange={(e) => setModel(e.target.value as typeof selectedModel)}
+                        onChange={(e) => setModel(e.target.value)}
                         style={{
                           position: "absolute", inset: 0, opacity: 0, cursor: "pointer",
                           width: "100%", height: "100%",
                         }}
                       >
-                        {SUPPORTED_MODELS.map((m) => (
+                        {availableModels.map((m) => (
                           <option 
                             key={m} 
                             value={m}
@@ -1010,9 +1023,9 @@ const App: React.FC = () => {
                   <div className="flex items-center" style={{ gap: "12px" }}>
                     <div className="relative flex items-center rounded-full" style={{ padding: "6px 16px 6px 12px", background: "var(--bg-color)", border: "1px solid var(--border-color)", gap: "6px" }}>
                       <span style={{ fontFamily: "'Crimson Pro', serif", fontSize: "13px", fontWeight: 500, color: "var(--text-color-muted)", whiteSpace: "nowrap" }}>{modelLabel(selectedModel)}</span>
-                      <select value={selectedModel} onChange={(e) => setModel(e.target.value as typeof selectedModel)}
+                      <select value={selectedModel} onChange={(e) => setModel(e.target.value)}
                         style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer", width: "100%", height: "100%" }}>
-                        {SUPPORTED_MODELS.map((m) => <option key={m} value={m}>{modelLabel(m)}</option>)}
+                        {availableModels.map((m: string) => <option key={m} value={m}>{modelLabel(m)}</option>)}
                       </select>
                       <Icon name="expand_more" size={14} />
                     </div>

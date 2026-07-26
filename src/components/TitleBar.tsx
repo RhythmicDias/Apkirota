@@ -15,14 +15,14 @@ const TitleBar: React.FC = () => {
         flexShrink: 0,
         position: "relative",
         zIndex: 9999,
-        WebkitAppRegion: "drag" as any,
-      }}
+        WebkitAppRegion: "drag",
+      } as React.CSSProperties}
     >
       {/* Title */}
       <div 
         data-tauri-drag-region
         className="flex items-center gap-4 w-full h-full"
-        style={{ paddingLeft: "24px", cursor: "default", WebkitAppRegion: "drag" as any }}
+        style={{ paddingLeft: "24px", cursor: "default", WebkitAppRegion: "drag" } as React.CSSProperties}
       >
         <span 
           className="material-symbols-outlined" 
@@ -46,7 +46,7 @@ const TitleBar: React.FC = () => {
       {/* Window Controls */}
       <div 
         className="flex items-center h-full flex-shrink-0 gap-4 pr-3"
-        style={{ WebkitAppRegion: "no-drag" as any }}
+        style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
       >
         <button
           className="h-full px-4 flex items-center justify-center transition-colors rounded-md my-1"
