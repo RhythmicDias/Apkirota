@@ -12,7 +12,7 @@ import type { ChatMessage } from "../lib/geminiClient";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export type AppMode = "normal" | "unlimited";
+export type AppMode = "normal" | "unlimited" | "pro";
 
 export const SUPPORTED_MODELS = [
   "gemini-3.5-flash",
@@ -148,6 +148,10 @@ interface AppState {
   updateKeyName: (id: string, name: string) => void;
   reorderApiKeys: (startIndex: number, endIndex: number) => void;
 
+  // Pro API Key
+  proApiKey: ApiKeyEntry | null;
+  setProApiKey: (entry: ApiKeyEntry | null) => void;
+
   // Mode
   mode: AppMode;
   setMode: (mode: AppMode) => void;
@@ -245,6 +249,10 @@ export const useAppStore = create<AppState>()(
           result.splice(endIndex, 0, removed);
           return { apiKeys: result };
         }),
+
+      // ── Pro API Key ────────────────────────────────────────────────────────
+      proApiKey: null,
+      setProApiKey: (entry) => set({ proApiKey: entry }),
 
       // ── Mode ──────────────────────────────────────────────────────────────
       mode: "normal",
@@ -459,7 +467,7 @@ export const useAppStore = create<AppState>()(
       setError: (error) => set({ error }),
     }),
     {
-      name: "apkirota-storage",
+      name: "keylooper-storage",
       storage: createJSONStorage(() => ({
         getItem: (name) => {
           const current = localStorage.getItem(name);
@@ -484,11 +492,9 @@ export const useAppStore = create<AppState>()(
         },
         setItem: (name, value) => {
           localStorage.setItem(name, value);
-          localStorage.setItem("apkirota-storage", value);
         },
         removeItem: (name) => {
           localStorage.removeItem(name);
-          localStorage.removeItem("apkirota-storage");
         },
       })),
       merge: (persistedState: any, currentState) => {

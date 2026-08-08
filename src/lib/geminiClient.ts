@@ -37,9 +37,11 @@ export interface SendMessageOptions {
   history: ChatMessage[];
   userParts: ChatPart[];
   rotator: KeyRotator;
-  mode: "normal" | "unlimited";
+  mode: "normal" | "unlimited" | "pro";
   systemPrompt?: string;
   modelConfig?: ModelConfig;
+  proApiKeyId?: string | null;
+  proApiKeyName?: string;
 }
 
 export interface GeminiResponse {
@@ -159,22 +161,30 @@ export async function sendMessage(
     const requiredKeyId = opts.userParts.find(p => p.uploadKeyId)?.uploadKeyId 
                        || opts.history.flatMap(m => m.parts).find(p => p.uploadKeyId)?.uploadKeyId;
 
-    const entry = requiredKeyId 
-      ? opts.rotator.getKeyById(requiredKeyId)
-      : (opts.mode === "unlimited"
-          ? opts.rotator.getNextKey()
-          : opts.rotator.getActiveKey());
+    let entry;
+    if (opts.mode === "pro") {
+      if (!opts.proApiKeyId) {
+        throw new Error("Pro Mode is selected, but no Pro API Key is configured in Settings.");
+      }
+      entry = { id: opts.proApiKeyId, name: opts.proApiKeyName || "Pro Key", status: "valid" as const };
+    } else {
+      entry = requiredKeyId 
+        ? opts.rotator.getKeyById(requiredKeyId)
+        : (opts.mode === "unlimited"
+            ? opts.rotator.getNextKey()
+            : opts.rotator.getActiveKey());
+            
+      if (requiredKeyId && !entry) {
+        throw new Error(
+          "The API key used to upload files in this conversation is missing or invalid. Please start a new chat."
+        );
+      }
 
-    if (requiredKeyId && !entry) {
-      throw new Error(
-        "The API key used to upload files in this conversation is missing or invalid. Please start a new chat."
-      );
-    }
-
-    if (!entry) {
-      throw new Error(
-        "No active API keys available. Please add or configure your keys in Settings."
-      );
+      if (!entry) {
+        throw new Error(
+          "No active API keys available. Please add or configure your keys in Settings."
+        );
+      }
     }
 
     // Load actual key string securely from OS Keyring
@@ -182,19 +192,29 @@ export async function sendMessage(
     try {
       rawKeyValue = await invoke<string>("load_api_key", { keyId: entry.id });
     } catch (e) {
-      opts.rotator.reportInvalid(entry.id);
+      if (opts.mode !== "pro") opts.rotator.reportInvalid(entry.id);
       lastError = new Error(`Failed to load key from secure storage: ${e}`);
       continue;
     }
 
     if (!rawKeyValue || rawKeyValue.trim() === "") {
-      opts.rotator.reportInvalid(entry.id);
+      if (opts.mode !== "pro") opts.rotator.reportInvalid(entry.id);
       lastError = new Error(`API key "${entry.name}" is empty or not configured in OS storage.`);
       continue;
     }
 
     const url = `${GEMINI_BASE}/${opts.model}:generateContent`;
-    const body = buildPayload(opts.history, opts.userParts, opts.systemPrompt, opts.modelConfig);
+    
+    // Auto-enable Google Search grounding if in Pro mode
+    const effectiveModelConfig = {
+      ...opts.modelConfig,
+      tools: {
+        ...opts.modelConfig?.tools,
+        groundingGoogleSearch: opts.mode === "pro" ? true : opts.modelConfig?.tools?.groundingGoogleSearch,
+      }
+    } as ModelConfig;
+
+    const body = buildPayload(opts.history, opts.userParts, opts.systemPrompt, effectiveModelConfig);
 
     try {
       const res = await fetch(url, {
@@ -209,7 +229,7 @@ export async function sendMessage(
           const json = await res.json();
           if (json.error && json.error.message) errText = json.error.message;
         } catch (e) {}
-        opts.rotator.reportRateLimit(entry.id, 60_000);
+        if (opts.mode !== "pro") opts.rotator.reportRateLimit(entry.id, 60_000);
         lastError = new Error(`Rate limit exceeded for key "${entry.name}". ${errText}`);
         if (requiredKeyId) {
           throw new Error(`Rate limit exceeded for key "${entry.name}". This conversation is locked to this key because of file attachments. Please wait before retrying.`);
@@ -223,7 +243,7 @@ export async function sendMessage(
           const raw = await res.text();
           try { errText = JSON.parse(raw)?.error?.message || raw; } catch(e) { errText = raw; }
         } catch (e) { errText = "Unknown API error"; }
-        opts.rotator.reportInvalid(entry.id);
+        if (opts.mode !== "pro") opts.rotator.reportInvalid(entry.id);
         lastError = new Error(`Key "${entry.name}" is invalid or unauthorized (attempt ${attempt + 1}/${MAX_RETRIES}). Details: ${errText}`);
         continue;
       }

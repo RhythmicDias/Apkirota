@@ -138,10 +138,12 @@ const Sidebar: React.FC<SidebarProps> = ({ onNewChat, onOpenSettings }) => {
         <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] ${
           mode === "unlimited"
             ? "text-[#C1E8FF] bg-[#5483B3]/12 border border-[#5483B3]/25"
+            : mode === "pro"
+            ? "text-[#d4af37] bg-[#d4af37]/10 border border-[#d4af37]/25"
             : "text-[#7DA0CA]/60"
         }`}>
-          <span className={`w-1.5 h-1.5 rounded-full ${mode === "unlimited" ? "bg-[#C1E8FF] animate-pulse" : "bg-[#7DA0CA]/40"}`} />
-          {mode === "unlimited" ? "Unlimited rotation active" : "Normal mode"}
+          <span className={`w-1.5 h-1.5 rounded-full ${mode === "unlimited" ? "bg-[#C1E8FF] animate-pulse" : mode === "pro" ? "bg-[#d4af37] shadow-[0_0_8px_#d4af37]" : "bg-[#7DA0CA]/40"}`} />
+          {mode === "unlimited" ? "Unlimited rotation active" : mode === "pro" ? "Pro Mode" : "Normal mode"}
         </div>
 
         {/* User row */}

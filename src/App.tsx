@@ -396,7 +396,8 @@ const App: React.FC = () => {
       const skill = initialStoreSession?.skillId ? skills.find(s => s.id === initialStoreSession.skillId) : undefined;
       const systemPrompt = skill?.systemPrompt;
       const startTime = Date.now();
-      const response = await sendMessage({ model: selectedModel, history, userParts, rotator, mode, modelConfig, systemPrompt });
+      const proApiKey = useAppStore.getState().proApiKey;
+      const response = await sendMessage({ model: selectedModel, history, userParts, rotator, mode, modelConfig, systemPrompt, proApiKeyId: proApiKey?.id, proApiKeyName: proApiKey?.name });
       const latencyMs = Date.now() - startTime;
       setRotationIndex(rotator.getCurrentIndex());
       const storeSession = useAppStore.getState().sessions.find(s => s.id === currentSessionId);
@@ -512,85 +513,31 @@ const App: React.FC = () => {
               padding: "4px",
             }}
           >
-            {mode === "normal" ? (
-              <>
+            {(["normal", "unlimited", "pro"] as const).map((m, idx) => (
+              <React.Fragment key={m}>
+                {idx > 0 && <span style={{ color: "var(--switcher-border)", margin: "0 6px", userSelect: "none", fontSize: "12px" }}>|</span>}
                 <button
-                  className="shadow-sm glow-unlimited"
+                  onClick={() => setMode(m)}
+                  className={mode === m ? "shadow-sm glow-unlimited" : ""}
                   style={{
                     fontFamily: "'Crimson Pro', serif",
                     fontSize: "13.5px",
-                    fontWeight: 600,
-                    color: "var(--switcher-btn-color)",
-                    background: "var(--switcher-btn-bg)",
+                    fontWeight: mode === m ? 600 : 500,
+                    color: mode === m ? (m === "pro" ? "#d4af37" : "var(--switcher-btn-color)") : "var(--text-color-muted)",
+                    background: mode === m ? "var(--switcher-btn-bg)" : "transparent",
                     border: "none",
                     borderRadius: "9999px",
                     padding: "5px 16px",
-                    cursor: "default",
+                    cursor: mode === m ? "default" : "pointer",
                     lineHeight: "1",
                   }}
+                  onMouseEnter={(e) => { if (mode !== m) e.currentTarget.style.color = "var(--primary)"; }}
+                  onMouseLeave={(e) => { if (mode !== m) e.currentTarget.style.color = "var(--text-color-muted)"; }}
                 >
-                  Normal
+                  {m.charAt(0).toUpperCase() + m.slice(1)}
                 </button>
-                <span style={{ color: "var(--switcher-border)", margin: "0 6px", userSelect: "none", fontSize: "12px" }}>|</span>
-                <button
-                  onClick={() => setMode("unlimited")}
-                  style={{
-                    fontFamily: "'Crimson Pro', serif",
-                    fontSize: "13.5px",
-                    fontWeight: 500,
-                    color: "var(--text-color-muted)",
-                    background: "transparent",
-                    border: "none",
-                    padding: "5px 16px",
-                    cursor: "pointer",
-                    lineHeight: "1",
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.color = "var(--primary)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.color = "var(--text-color-muted)"; }}
-                >
-                  Unlimited
-                </button>
-              </>
-            ) : (
-              <>
-                <button
-                  onClick={() => setMode("normal")}
-                  style={{
-                    fontFamily: "'Crimson Pro', serif",
-                    fontSize: "13.5px",
-                    fontWeight: 500,
-                    color: "var(--text-color-muted)",
-                    background: "transparent",
-                    border: "none",
-                    padding: "5px 16px",
-                    cursor: "pointer",
-                    lineHeight: "1",
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.color = "var(--primary)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.color = "var(--text-color-muted)"; }}
-                >
-                  Normal
-                </button>
-                <span style={{ color: "var(--switcher-border)", margin: "0 6px", userSelect: "none", fontSize: "12px" }}>|</span>
-                <button
-                  className="shadow-sm glow-unlimited"
-                  style={{
-                    fontFamily: "'Crimson Pro', serif",
-                    fontSize: "13.5px",
-                    fontWeight: 600,
-                    color: "var(--switcher-btn-color)",
-                    background: "var(--switcher-btn-bg)",
-                    border: "none",
-                    borderRadius: "9999px",
-                    padding: "5px 16px",
-                    cursor: "default",
-                    lineHeight: "1",
-                  }}
-                >
-                  Unlimited
-                </button>
-              </>
-            )}
+              </React.Fragment>
+            ))}
           </div>
         )}
 
@@ -900,7 +847,8 @@ const App: React.FC = () => {
                       const skill = updatedSession?.skillId ? skills.find(s => s.id === updatedSession.skillId) : undefined;
                       const systemPrompt = skill?.systemPrompt;
                       const startTime = Date.now();
-                      const response = await sendMessage({ model: selectedModel, history, userParts, rotator, mode, modelConfig, systemPrompt });
+                      const proApiKey = useAppStore.getState().proApiKey;
+                      const response = await sendMessage({ model: selectedModel, history, userParts, rotator, mode, modelConfig, systemPrompt, proApiKeyId: proApiKey?.id, proApiKeyName: proApiKey?.name });
                       const latencyMs = Date.now() - startTime;
                       setRotationIndex(rotator.getCurrentIndex());
                       updateMessageMetadata(activeSessionId, i, { 
@@ -951,7 +899,8 @@ const App: React.FC = () => {
                       const skill = updatedSession?.skillId ? skills.find(s => s.id === updatedSession.skillId) : undefined;
                       const systemPrompt = skill?.systemPrompt;
                       const startTime = Date.now();
-                      const response = await sendMessage({ model: selectedModel, history, userParts, rotator, mode, modelConfig, systemPrompt });
+                      const proApiKey = useAppStore.getState().proApiKey;
+                      const response = await sendMessage({ model: selectedModel, history, userParts, rotator, mode, modelConfig, systemPrompt, proApiKeyId: proApiKey?.id, proApiKeyName: proApiKey?.name });
                       const latencyMs = Date.now() - startTime;
                       setRotationIndex(rotator.getCurrentIndex());
                       updateMessageMetadata(activeSessionId, i, { 

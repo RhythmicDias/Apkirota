@@ -23,12 +23,15 @@ fn save_api_key(key_id: String, key_value: String) -> Result<(), String> {
     if key_value.len() > 256 {
         return Err("API key value exceeds maximum length.".to_string());
     }
-    if let Ok(entry) = Entry::new("apkirota", &key_id) {
-        let _ = entry.set_password(&key_value);
-    }
     if let Ok(entry) = Entry::new("keylooper", &key_id) {
         let _ = entry.set_password(&key_value);
     }
+
+    // Clean up legacy keychain entry if it exists
+    if let Ok(legacy_entry) = Entry::new("apkirota", &key_id) {
+        let _ = legacy_entry.delete_credential();
+    }
+
     Ok(())
 }
 
@@ -37,13 +40,6 @@ fn load_api_key(key_id: String) -> Result<String, String> {
     if !is_valid_uuid(&key_id) {
         return Err("Invalid key ID format.".to_string());
     }
-    if let Ok(entry) = Entry::new("apkirota", &key_id) {
-        if let Ok(pass) = entry.get_password() {
-            if !pass.is_empty() {
-                return Ok(pass);
-            }
-        }
-    }
     if let Ok(entry) = Entry::new("keylooper", &key_id) {
         if let Ok(pass) = entry.get_password() {
             if !pass.is_empty() {
@@ -51,6 +47,20 @@ fn load_api_key(key_id: String) -> Result<String, String> {
             }
         }
     }
+
+    // Fallback to legacy keychain
+    if let Ok(entry) = Entry::new("apkirota", &key_id) {
+        if let Ok(pass) = entry.get_password() {
+            if !pass.is_empty() {
+                // Migrate to new keychain
+                if let Ok(new_entry) = Entry::new("keylooper", &key_id) {
+                    let _ = new_entry.set_password(&pass);
+                }
+                return Ok(pass);
+            }
+        }
+    }
+
     Ok("".to_string())
 }
 
@@ -61,9 +71,11 @@ fn delete_api_key(key_id: String) -> Result<(), String> {
     }
     let entry = Entry::new("keylooper", &key_id).map_err(|e| format!("Keyring error: {}", e))?;
     let _ = entry.delete_credential();
+
     if let Ok(legacy_entry) = Entry::new("apkirota", &key_id) {
         let _ = legacy_entry.delete_credential();
     }
+
     Ok(())
 }
 

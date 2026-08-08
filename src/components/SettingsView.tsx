@@ -49,6 +49,9 @@ const SettingsView: React.FC = () => {
   const setView           = useAppStore((s) => s.setView);
   const usageRecords      = useAppStore((s) => s.usageRecords);
   const clearUsageRecords = useAppStore((s) => s.clearUsageRecords);
+  
+  const proApiKey         = useAppStore((s) => s.proApiKey);
+  const setProApiKey      = useAppStore((s) => s.setProApiKey);
 
   // Form states
   const [newName, setNewName]         = useState("");
@@ -61,6 +64,9 @@ const SettingsView: React.FC = () => {
   const [editingId, setEditingId]     = useState<string | null>(null);
   const [editName, setEditName]       = useState("");
   const [editKey, setEditKey]         = useState("");
+
+  const [newProName, setNewProName]   = useState("");
+  const [newProKey, setNewProKey]     = useState("");
 
   const handleAddKey = async () => {
     setFormError(null);
@@ -84,6 +90,39 @@ const SettingsView: React.FC = () => {
       setNewKey("");
     } catch (err) {
       setFormError(`Failed to save key securely: ${err}`);
+    }
+  };
+
+  const handleAddProKey = async () => {
+    setFormError(null);
+    const trimmedName = newProName.trim() || "Pro API Key";
+    const trimmedKey  = newProKey.trim();
+
+    if (!trimmedKey) {
+      setFormError("Pro API Key is required.");
+      return;
+    }
+
+    try {
+      const id = crypto.randomUUID();
+      await invoke("save_api_key", { keyId: id, keyValue: trimmedKey });
+      
+      if (proApiKey) {
+        try { await invoke("delete_api_key", { keyId: proApiKey.id }); } catch(e) {}
+      }
+
+      setProApiKey({ id, name: trimmedName, status: "unchecked" });
+      setNewProName("");
+      setNewProKey("");
+    } catch (err) {
+      setFormError(`Failed to save Pro key securely: ${err}`);
+    }
+  };
+
+  const handleRemoveProKey = async () => {
+    if (proApiKey) {
+      try { await invoke("delete_api_key", { keyId: proApiKey.id }); } catch(e) {}
+      setProApiKey(null);
     }
   };
 
@@ -381,6 +420,121 @@ const SettingsView: React.FC = () => {
                   </button>
                 </div>
               </div>
+            </div>
+
+            {/* Pro API Key Section */}
+            <div
+              style={{
+                padding: "20px",
+                borderRadius: "16px",
+                border: "1px solid var(--border-color)",
+                background: "var(--input-bg)",
+                display: "flex",
+                flexDirection: "column",
+                gap: "16px"
+              }}
+            >
+              <div>
+                <h3 style={{ fontSize: "16px", fontWeight: 700, color: "var(--text-color)", margin: "0 0 4px 0", display: "flex", alignItems: "center", gap: "8px" }}>
+                  <Icon name="workspace_premium" size={20} style={{ color: "#d4af37" }} />
+                  Pro API Key
+                </h3>
+                <p style={{ fontSize: "13px", color: "var(--text-color-muted)", margin: 0 }}>
+                  This key is exclusively used when "Pro" mode is enabled, giving access to live web search.
+                </p>
+              </div>
+
+              {proApiKey ? (
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 14px", borderRadius: "12px", border: "1px solid var(--border-color)", background: "var(--bg-color)" }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                    <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-color)" }}>{proApiKey.name}</span>
+                    <span style={{ fontSize: "11px", color: "var(--text-color-muted)", fontFamily: "monospace" }}>Configured & Secure</span>
+                  </div>
+                  <button
+                    onClick={handleRemoveProKey}
+                    style={{
+                      background: "transparent",
+                      border: "1px solid var(--border-color)",
+                      borderRadius: "6px",
+                      padding: "6px",
+                      cursor: "pointer",
+                      color: "var(--text-color-muted)",
+                      display: "flex",
+                      alignItems: "center"
+                    }}
+                    title="Remove Pro Key"
+                  >
+                    <Icon name="delete" size={16} />
+                  </button>
+                </div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                      <label style={{ fontSize: "11px", fontFamily: "'JetBrains Mono', monospace", color: "var(--text-color-muted)" }}>
+                        KEY NAME
+                      </label>
+                      <input
+                        type="text"
+                        value={newProName}
+                        onChange={(e) => setNewProName(e.target.value)}
+                        placeholder="e.g. My Premium Key"
+                        style={{
+                          padding: "8px 12px",
+                          borderRadius: "8px",
+                          border: "1px solid var(--border-color)",
+                          background: "var(--bg-color)",
+                          color: "var(--text-color)",
+                          fontSize: "13px",
+                          outline: "none",
+                        }}
+                      />
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                      <label style={{ fontSize: "11px", fontFamily: "'JetBrains Mono', monospace", color: "var(--text-color-muted)" }}>
+                        PRO GEMINI API KEY
+                      </label>
+                      <input
+                        type="password"
+                        value={newProKey}
+                        onChange={(e) => setNewProKey(e.target.value)}
+                        placeholder="AIzaSy..."
+                        style={{
+                          padding: "8px 12px",
+                          borderRadius: "8px",
+                          border: "1px solid var(--border-color)",
+                          background: "var(--bg-color)",
+                          color: "var(--text-color)",
+                          fontSize: "13px",
+                          fontFamily: "monospace",
+                          outline: "none",
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "flex-end", paddingTop: "4px" }}>
+                    <button
+                      onClick={handleAddProKey}
+                      style={{
+                        padding: "8px 18px",
+                        borderRadius: "8px",
+                        fontWeight: 600,
+                        fontSize: "13px",
+                        background: "var(--primary)",
+                        color: "white",
+                        border: "none",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px"
+                      }}
+                    >
+                      <Icon name="save" size={16} />
+                      <span>Save Pro Key</span>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Configured Keys Card Section */}

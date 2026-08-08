@@ -23,30 +23,32 @@ const ChatHeader: React.FC = () => {
 
       {/* Left: mode toggle */}
       <div className="flex items-center gap-2.5">
-        <span className={`text-xs transition-colors duration-200 ${mode === "normal" ? "text-[#C1E8FF]/80" : "text-[#7DA0CA]/40"}`}>
-          Normal
-        </span>
-
-        <button
-          onClick={() => setMode(mode === "normal" ? "unlimited" : "normal")}
-          role="switch"
-          aria-checked={mode === "unlimited"}
-          className={`relative inline-flex w-12 h-6 rounded-full border transition-all duration-300 focus:outline-none ${
-            mode === "unlimited"
-              ? "bg-gradient-to-r from-[#5483B3] to-[#C1E8FF] border-transparent glow-animate"
-              : "bg-[#052659] border-[#5483B3]/25"
-          }`}
-        >
-          <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transform transition-transform duration-300 ${mode === "unlimited" ? "translate-x-6" : "translate-x-0"}`} />
-        </button>
-
-        <span className={`text-xs transition-colors duration-200 ${mode === "unlimited" ? "text-[#C1E8FF]/80" : "text-[#7DA0CA]/40"}`}>
-          Unlimited
-        </span>
+        <div className="flex items-center gap-1 p-0.5 bg-[#052659] border border-[#5483B3]/25 rounded-full">
+          {(["normal", "unlimited", "pro"] as const).map((m) => (
+            <button
+              key={m}
+              onClick={() => setMode(m)}
+              className={`px-3 py-1 rounded-full text-xs transition-all duration-300 ${
+                mode === m
+                  ? m === "pro"
+                    ? "bg-[#d4af37]/20 text-[#d4af37] font-medium"
+                    : "bg-gradient-to-r from-[#5483B3] to-[#C1E8FF] text-[#021024] font-medium shadow-sm"
+                  : "text-[#7DA0CA]/60 hover:text-[#C1E8FF]/80"
+              }`}
+            >
+              {m.charAt(0).toUpperCase() + m.slice(1)}
+            </button>
+          ))}
+        </div>
 
         {mode === "unlimited" && (
           <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-[#C1E8FF]/10 text-[#C1E8FF]/80 border border-[#C1E8FF]/20">
             rotating
+          </span>
+        )}
+        {mode === "pro" && (
+          <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-[#d4af37]/10 text-[#d4af37]/80 border border-[#d4af37]/20">
+            web search
           </span>
         )}
         {activeSkill && (
